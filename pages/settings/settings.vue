@@ -41,6 +41,19 @@
 				</view>
 			</view>
 
+			<!-- 轮播图管理入口 - 仅管理员可见 -->
+			<view class="setting-group" v-if="isAdminComputed">
+				<view class="setting-item" @click="navigateToCarouselAdmin">
+					<view class="setting-item-left">
+						<text class="setting-icon">🖼️</text>
+						<text class="setting-label">轮播图管理</text>
+					</view>
+					<view class="setting-right">
+						<view class="setting-arrow"></view>
+					</view>
+				</view>
+			</view>
+
 			<!-- 用户认证入口 - 仅管理员可见 -->
 			<view class="setting-group" v-if="isAdminComputed">
 				<view class="setting-item" @click="navigateToUserAuth">
@@ -247,6 +260,29 @@ export default {
 			// 跳转到用户认证页面
 			uni.navigateTo({
 				url: '/pages/user-auth/user-auth'
+			})
+		},
+
+		// 导航到轮播图管理页面 - 带权限验证
+		navigateToCarouselAdmin() {
+			console.log('尝试跳转到轮播图管理页面')
+
+			// 双重权限验证
+			if (!this.isAdmin()) {
+				console.warn('非管理员用户尝试访问轮播图管理页面，被拒绝')
+				uni.showToast({
+					title: '权限不足',
+					icon: 'none'
+				})
+				return
+			}
+
+			console.log('管理员权限验证通过，跳转到轮播图管理页面')
+			uni.vibrateShort() // 短震动反馈
+
+			// 跳转到轮播图管理页面
+			uni.navigateTo({
+				url: '/pages/carousel-admin/carousel-admin'
 			})
 		}
 	}
