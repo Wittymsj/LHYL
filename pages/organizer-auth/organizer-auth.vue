@@ -1,6 +1,6 @@
 <template>
 	<view class="organizer-auth">
-		<!-- 顶部导航栏 -->
+<!-- 		顶部导航栏
 		<view class="header animate-slide-down">
 			<view class="nav-content">
 				<view class="back-btn" @click="goBack">
@@ -13,7 +13,7 @@
 					<text class="help-text">帮助</text>
 				</view>
 			</view>
-		</view>
+		</view> -->
 
 		<!-- 主要内容 -->
 		<view class="container">

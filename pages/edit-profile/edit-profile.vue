@@ -1,13 +1,5 @@
 <template>
   <view class="edit-profile">
-    <!-- 顶部导航栏 -->
-    <view class="header">
-      <view class="back-btn" @click="goBack">
-        <view class="back-icon"></view>
-      </view>
-      <view class="header-title">个人信息</view>
-    </view>
-
     <!-- 滚动内容区域 -->
     <scroll-view class="scroll-content" scroll-y enhanced="true" show-scrollbar="false">
       <!-- 头像卡片 -->
@@ -310,10 +302,6 @@ export default {
     this.loadFormData()
   },
   methods: {
-    goBack() {
-      uni.navigateBack()
-    },
-
     uploadAvatar() {
       uni.chooseImage({
         count: 1,
@@ -477,59 +465,10 @@ export default {
   position: relative;
 }
 
-/* 顶部导航栏 */
-.header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 88rpx;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.back-btn {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 88rpx;
-  height: 88rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.back-btn:active {
-  background-color: rgba(117, 176, 156, 0.1);
-}
-
-.back-icon {
-  width: 32rpx;
-  height: 32rpx;
-  border-left: 4rpx solid $primary-cambridge-blue;
-  border-bottom: 4rpx solid $primary-cambridge-blue;
-  transform: rotate(45deg);
-  margin-left: 32rpx;
-}
-
-.header-title {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: $primary-cambridge-blue;
-  letter-spacing: 1rpx;
-}
 
 /* 滚动内容区域 */
 .scroll-content {
-  height: calc(100vh - 88rpx - 120rpx);
-  padding-top: 88rpx;
+  height: calc(100vh - 120rpx);
   padding-bottom: 40rpx;
 }
 
@@ -1029,7 +968,7 @@ export default {
 /* 成功提示 */
 .success-toast {
   position: fixed;
-  top: 120rpx;
+  top: 32rpx;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2000;
@@ -1076,7 +1015,7 @@ export default {
 /* 移动端适配 */
 @media (max-width: 480px) {
   .scroll-content {
-    height: calc(100vh - 88rpx - 140rpx);
+    height: calc(100vh - 140rpx);
   }
 
   .profile-card,

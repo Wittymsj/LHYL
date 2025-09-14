@@ -34,8 +34,7 @@
 				"navigationBarTitleText": "发布活动",
 				"navigationBarBackgroundColor": "#75b09c",
 				"navigationBarTextStyle": "white",
-				"backgroundColor": "#f8f9fa",
-				"enablePullDownRefresh": false
+				"backgroundColor": "#f8f9fa"
 			}
 		},
 		{
@@ -44,8 +43,7 @@
 				"navigationBarTitleText": "活动详情",
 				"navigationBarBackgroundColor": "#75b09c",
 				"navigationBarTextStyle": "white",
-				"backgroundColor": "#f8f9fa",
-				"enablePullDownRefresh": false
+				"backgroundColor": "#f8f9fa"
 			}
 		},
 		{
@@ -64,20 +62,16 @@
 				"navigationBarTitleText": "设置",
 				"navigationBarBackgroundColor": "#75b09c",
 				"navigationBarTextStyle": "white",
-				"backgroundColor": "#f8f9fa",
-				"enablePullDownRefresh": false,
-				"navigationStyle": "custom"
+				"backgroundColor": "#f8f9fa"
 			}
 		},
 		{
 			"path": "pages/user-auth/user-auth",
 			"style": {
-				"navigationBarTitleText": "用户认证",
+				"navigationBarTitleText": "用户审核",
 				"navigationBarBackgroundColor": "#75b09c",
 				"navigationBarTextStyle": "white",
-				"backgroundColor": "#f8f9fa",
-				"enablePullDownRefresh": false,
-				"navigationStyle": "custom"
+				"backgroundColor": "#f8f9fa"
 			}
 		},
 		{
@@ -86,9 +80,7 @@
 				"navigationBarTitleText": "活动审核",
 				"navigationBarBackgroundColor": "#75b09c",
 				"navigationBarTextStyle": "white",
-				"backgroundColor": "#f8f9fa",
-				"enablePullDownRefresh": false,
-				"navigationStyle": "custom"
+				"backgroundColor": "#f8f9fa"
 			}
 		},
 		{
@@ -97,9 +89,7 @@
 				"navigationBarTitleText": "主办方认证",
 				"navigationBarBackgroundColor": "#75b09c",
 				"navigationBarTextStyle": "white",
-				"backgroundColor": "#f8f9fa",
-				"enablePullDownRefresh": false,
-				"navigationStyle": "custom"
+				"backgroundColor": "#f8f9fa"
 			}
 		}
 	],

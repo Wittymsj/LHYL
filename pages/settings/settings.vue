@@ -1,16 +1,7 @@
 <template>
 	<view class="settings-container">
-		<br>
-		<!-- 顶部导航栏 -->
-		<view class="header">
-			<view class="back-btn" @click="goBack">
-				<view class="back-icon"></view>
-			</view>
-			<text class="header-title">设置</text>
-		</view>
-
 		<!-- 内容区域 -->
-		<scroll-view class="content" scroll-y :style="{ paddingTop: statusBarHeight + 'px' }">
+		<scroll-view class="content" scroll-y>
 			<!-- 字体大小设置 -->
 			<view class="setting-group">
 				<view class="setting-item" @click="handleFontSizeClick">
@@ -81,16 +72,11 @@ export default {
 	data() {
 		return {
 			userRole: 'user', // 用户角色
-			statusBarHeight: 0,
 			currentFontSize: 'normal'
 		}
 	},
 
 	onLoad() {
-		// 获取状态栏高度
-		const systemInfo = uni.getSystemInfoSync()
-		this.statusBarHeight = systemInfo.statusBarHeight || 0
-
 		// 检查用户角色
 		this.checkUserRole()
 
@@ -262,22 +248,6 @@ export default {
 			uni.navigateTo({
 				url: '/pages/user-auth/user-auth'
 			})
-		},
-
-		// 返回上一页
-		goBack() {
-			// 添加返回动画效果
-			uni.vibrateShort()
-
-			// 返回上一页
-			if (getCurrentPages().length > 1) {
-				uni.navigateBack()
-			} else {
-				// 如果没有历史页面，跳转到首页
-				uni.switchTab({
-					url: '/pages/index/index'
-				})
-			}
 		}
 	}
 }
@@ -293,55 +263,11 @@ export default {
 	position: relative;
 }
 
-// 顶部导航栏
-.header {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 88rpx;
-	background-color: $uni-bg-color;
-	border-bottom: 1rpx solid $uni-border-color;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 1000;
-	padding-top: var(--status-bar-height, 0);
-}
-
-.back-btn {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 88rpx;
-	height: 88rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: none;
-	border: none;
-}
-
-.back-icon {
-	width: 16rpx;
-	height: 28rpx;
-	border-left: 4rpx solid $uni-text-color;
-	border-bottom: 4rpx solid $uni-text-color;
-	transform: rotate(45deg);
-	margin-left: 32rpx;
-}
-
-.header-title {
-	font-size: 32rpx;
-	font-weight: 500;
-	color: $uni-text-color;
-}
 
 // 内容区域
 .content {
 	width: 100%;
 	min-height: 100vh;
-	padding-top: calc(88rpx + var(--status-bar-height, 0));
 	padding-bottom: 40rpx;
 }
 
@@ -498,10 +424,6 @@ export default {
 		font-size: 32rpx;
 		padding: 16rpx 32rpx;
 		min-width: 120rpx;
-	}
-
-	.header-title {
-		font-size: 36rpx;
 	}
 }
 

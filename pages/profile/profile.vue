@@ -297,9 +297,8 @@ export default {
 
 		viewActivityDetail(activityId) {
 			console.log('查看活动详情:', activityId)
-			uni.showToast({
-				title: `活动ID: ${activityId}`,
-				icon: 'none'
+			uni.navigateTo({
+				url: `/pages/activity-detail/activity-detail?id=${activityId}`
 			})
 		},
 
