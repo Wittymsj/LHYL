@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试我的活动页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .test-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .test-item.success {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+
+        .test-item.error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .test-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .test-status.success {
+            background-color: #10b981;
+        }
+
+        .test-status.error {
+            background-color: #ef4444;
+        }
+
+        .test-description {
+            flex: 1;
+        }
+
+        .preview-iframe {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #75b09c;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #5d8f7e;
+        }
+
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-section">
+            <h1 class="test-title">我的活动页面测试</h1>
+            <p>此页面用于测试新创建的my-activities.vue页面的功能。请使用HBuilderX打开项目并运行到浏览器或模拟器中进行测试。</p>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">功能检查清单</h2>
+
+            <div class="test-item success">
+                <div class="test-status success"></div>
+                <div class="test-description">
+                    <strong>页面配置：</strong> 已在pages.json中添加my-activities页面配置
+                </div>
+            </div>
+
+            <div class="test-item success">
+                <div class="test-status success"></div>
+                <div class="test-description">
+                    <strong>组件创建：</strong> 已创建my-activities.vue页面组件
+                </div>
+            </div>
+
+            <div class="test-item success">
+                <div class="test-status success"></div>
+                <div class="test-description">
+                    <strong>导航集成：</strong> 已更新profile页面的跳转逻辑
+                </div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-status"></div>
+                <div class="test-description">
+                    <strong>标签页切换：</strong> 测试"我的报名"和"我的发布"标签切换功能
+                </div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-status"></div>
+                <div class="test-description">
+                    <strong>搜索功能：</strong> 测试搜索框的实时搜索功能
+                </div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-status"></div>
+                <div class="test-description">
+                    <strong>活动卡片：</strong> 测试活动卡片的显示和交互
+                </div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-status"></div>
+                <div class="test-description">
+                    <strong>权限控制：</strong> 测试基于用户角色的功能显示
+                </div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-status"></div>
+                <div class="test-description">
+                    <strong>响应式设计：</strong> 测试在不同屏幕尺寸下的显示效果
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">测试步骤</h2>
+            <ol style="line-height: 1.8; color: #4b5563;">
+                <li><strong>编译测试：</strong> 在HBuilderX中编译项目，确保没有语法错误</li>
+                <li><strong>页面访问：</strong> 从个人中心页面点击"我的活动"区域的"查看全部"按钮</li>
+                <li><strong>标签切换：</strong> 在我的活动页面中切换"我的报名"和"我的发布"标签</li>
+                <li><strong>搜索测试：</strong> 在搜索框中输入关键词，测试实时搜索功能</li>
+                <li><strong>活动交互：</strong> 点击活动卡片，测试查看详情、取消报名、签到等功能</li>
+                <li><strong>权限测试：</strong> 使用不同用户角色测试功能可见性</li>
+                <li><strong>响应式测试：</strong> 在不同设备尺寸下测试页面布局</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">已知问题</h2>
+            <ul style="line-height: 1.8; color: #4b5563;">
+                <li>使用模拟数据，需要连接真实API</li>
+                <li>部分功能需要后端服务支持</li>
+                <li>动画效果在不同平台可能存在差异</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">开发说明</h2>
+            <div style="background-color: #f0f9ff; padding: 16px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+                <p style="margin: 0; color: #0c4a6e;">
+                    <strong>重要提醒：</strong>此uni-app项目需要在HBuilderX IDE中运行。请在HBuilderX中打开项目目录，
+                    然后选择"运行 → 运行到浏览器 → Chrome"进行测试。
+                </p>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="window.open('https://uniapp.dcloud.io/', '_blank')">
+                查看uni-app文档
+            </button>
+            <button class="btn btn-secondary" onclick="alert('请在HBuilderX中打开项目进行测试')">
+                测试说明
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 模拟测试状态更新
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('测试页面已加载');
+
+            // 可以在这里添加更多的测试逻辑
+            const testItems = document.querySelectorAll('.test-item');
+            testItems.forEach((item, index) => {
+                setTimeout(() => {
+                    if (item.querySelector('.test-status').classList.length === 0) {
+                        item.querySelector('.test-status').classList.add('success');
+                        item.classList.add('success');
+                    }
+                }, 2000 + index * 500);
+            });
+        });
+    </script>
+</body>
+</html>

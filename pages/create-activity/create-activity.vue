@@ -45,10 +45,71 @@
 			class="form-content"
 			scroll-y
 			:scroll-top="scrollTop"
-			@scroll="handleScroll">
+			@scroll="handleScroll"
+			@tap="handlePageTap">
 
 			<!-- Basic Information Section -->
 			<view id="step-1" class="form-section">
+				<!-- History Activity Selector -->
+				<view class="form-group">
+					<text class="form-label">快速填充（可选）</text>
+					<view class="history-selector" @tap.stop>
+						<view class="selector-container" @tap="toggleHistoryDropdown">
+							<view class="selector-content">
+								<text class="selector-icon">📚</text>
+								<text class="selector-text" v-if="selectedHistoryActivity">
+									{{selectedHistoryActivity.name}}
+								</text>
+								<text class="selector-text placeholder" v-else>
+									选择历史活动快速填充
+								</text>
+							</view>
+							<view class="selector-arrow" :class="{'arrow-up': showHistoryDropdown}">
+								<text class="arrow-icon">▼</text>
+							</view>
+						</view>
+
+						<!-- Dropdown Menu -->
+						<view class="history-dropdown" v-if="showHistoryDropdown" @tap.stop>
+							<view class="dropdown-header">
+								<text class="dropdown-title">历史活动列表</text>
+								<text class="dropdown-count">共 {{historyData.length}} 条</text>
+							</view>
+							<view class="dropdown-search" @tap.stop>
+								<text class="search-icon">🔍</text>
+								<input
+									class="history-search-input"
+									v-model="historySearchKeyword"
+									placeholder="搜索活动名称..."
+									@input="filterHistoryActivities" />
+							</view>
+							<scroll-view class="dropdown-list" scroll-y v-if="filteredHistoryActivities.length > 0">
+								<view
+									class="dropdown-item"
+									v-for="activity in filteredHistoryActivities"
+									:key="activity.id"
+									@tap="selectHistoryActivity(activity)">
+									<view class="item-content">
+										<view class="item-name">{{activity.name}}</view>
+										<view class="item-desc">{{activity.shortDesc}}</view>
+										<view class="item-location">
+											<text class="location-icon">📍</text>
+											<text>{{activity.province}} {{activity.city}}</text>
+										</view>
+									</view>
+									<view class="item-arrow">
+										<text class="arrow-icon">→</text>
+									</view>
+								</view>
+							</scroll-view>
+							<view class="dropdown-empty" v-else>
+								<text class="empty-icon">📋</text>
+								<text class="empty-text">暂无匹配的历史活动</text>
+							</view>
+						</view>
+					</view>
+				</view>
+
 				<view class="section-header">
 					<view class="section-icon">📋</view>
 					<text class="section-title">基本信息</text>
@@ -434,12 +495,115 @@
 				</button>
 			</view>
 		</view>
+
+		<!-- Activity History Modal - Shadcn Style -->
+		<view class="history-modal" v-if="showModal">
+			<view class="modal-overlay" @click="closeHistoryModal"></view>
+			<view class="modal-content">
+				<!-- Modal Header -->
+				<view class="modal-header">
+					<view class="header-content">
+						<view class="header-title">
+							<text class="title-icon">📚</text>
+							<text class="title-text">活动发布历史</text>
+						</view>
+						<view class="header-subtitle">
+							<text class="subtitle-text">快速查找并填充历史活动数据</text>
+						</view>
+					</view>
+					<view class="close-btn" @click="closeHistoryModal">
+						<text class="close-icon">✕</text>
+					</view>
+				</view>
+
+				<!-- Search Section -->
+				<view class="search-section">
+					<view class="search-container">
+						<text class="search-icon">🔍</text>
+						<input
+							class="search-input"
+							v-model="searchKeyword"
+							placeholder="搜索活动名称、地点、描述..."
+							@input="onSearchInput"
+							@focus="onSearchFocus"
+							@blur="onSearchBlur" />
+					</view>
+				</view>
+
+				<!-- Modal Body -->
+				<scroll-view class="modal-body" scroll-y>
+					<!-- Empty State -->
+					<view v-if="filteredHistory.length === 0" class="empty-state">
+						<view class="empty-icon-container">
+							<text class="empty-icon">📝</text>
+						</view>
+						<text class="empty-title">暂无活动发布记录</text>
+						<text class="empty-description">发布活动后将自动保存到历史记录中</text>
+					</view>
+
+					<!-- History Items -->
+					<view v-else class="history-list">
+						<view
+							v-for="(item, index) in filteredHistory"
+							:key="index"
+							class="history-card"
+							@click="fillFromHistory(item)">
+
+							<!-- Card Header -->
+							<view class="card-header">
+								<view class="card-title-area">
+									<text class="card-title">{{item.name || '未命名活动'}}</text>
+									<text class="card-subtitle">{{item.shortDesc || '暂无描述'}}</text>
+								</view>
+								<view class="card-badge">
+									<text class="badge-text">{{item.publishDate || '刚刚'}}</text>
+								</view>
+							</view>
+
+							<!-- Card Content -->
+							<view class="card-content">
+								<view class="info-row">
+									<view class="info-item">
+										<text class="info-icon">📍</text>
+										<text class="info-text">{{item.province}}{{item.city}}{{item.district || '地点未知'}}</text>
+									</view>
+									<view class="info-item">
+										<text class="info-icon">📅</text>
+										<text class="info-text">{{item.startTime || '时间未知'}}</text>
+									</view>
+								</view>
+								<view v-if="item.maxParticipants || item.fee" class="info-row">
+									<view class="info-item" v-if="item.maxParticipants">
+										<text class="info-icon">👥</text>
+										<text class="info-text">{{item.maxParticipants}}人</text>
+									</view>
+									<view class="info-item" v-if="item.fee">
+										<text class="info-icon">💰</text>
+										<text class="info-text">¥{{item.fee}}</text>
+									</view>
+								</view>
+							</view>
+
+							<!-- Card Footer -->
+							<view class="card-footer">
+								<view class="action-button">
+									<text class="action-icon">📝</text>
+									<text class="action-text">填充表单</text>
+								</view>
+								<view class="card-arrow">→</view>
+							</view>
+						</view>
+					</view>
+				</scroll-view>
+			</view>
+		</view>
 	</view>
 </template>
 
 <script>
 import FormInput from '@/components/form-input.vue'
 import FormTextarea from '@/components/form-textarea.vue'
+import { activityService } from '@/services/activity'
 
 export default {
 	components: {
@@ -452,6 +616,18 @@ export default {
 			currentStep: 1,
 			scrollTop: 0,
 			progressWidth: 25,
+
+			// Modal state
+			showModal: false,
+			searchKeyword: '',
+			historyData: [],
+			filteredHistory: [],
+
+			// History selector state
+			showHistoryDropdown: false,
+			historySearchKeyword: '',
+			selectedHistoryActivity: null,
+			filteredHistoryActivities: [],
 
 			// Form data
 			formData: {
@@ -951,6 +1127,7 @@ export default {
 	onLoad() {
 		this.initializeLocationData()
 		this.loadDraft()
+		this.loadHistoryActivities()
 		this.setupScrollListener()
 	},
 
@@ -958,7 +1135,85 @@ export default {
 		this.saveDraft(true) // Auto-save on page unload
 	},
 
+	watch: {
+		searchKeyword: {
+			handler(newVal) {
+				console.log('搜索关键词变化:', newVal)
+				this.filterHistory()
+			},
+			immediate: true
+		}
+	},
+
 	methods: {
+		// History selector methods
+		loadHistoryActivities() {
+			try {
+				const history = uni.getStorageSync('activityHistory') || []
+				this.historyData = history
+				this.filteredHistoryActivities = history
+				console.log('📚 已加载历史活动数据:', history.length, '条')
+			} catch (e) {
+				console.error('❌ 加载历史活动失败:', e)
+				this.historyData = []
+				this.filteredHistoryActivities = []
+			}
+		},
+
+		toggleHistoryDropdown() {
+			this.showHistoryDropdown = !this.showHistoryDropdown
+			if (this.showHistoryDropdown) {
+				// 点击其他地方关闭下拉框
+				setTimeout(() => {
+					uni.$on('clickOutside', this.closeHistoryDropdown)
+				}, 100)
+			} else {
+				this.closeHistoryDropdown()
+			}
+		},
+
+		closeHistoryDropdown() {
+			this.showHistoryDropdown = false
+			uni.$off('clickOutside', this.closeHistoryDropdown)
+		},
+
+		filterHistoryActivities() {
+			if (!this.historySearchKeyword.trim()) {
+				this.filteredHistoryActivities = this.historyData
+				return
+			}
+
+			const keyword = this.historySearchKeyword.toLowerCase()
+			this.filteredHistoryActivities = this.historyData.filter(activity => {
+				return (activity.name && activity.name.toLowerCase().includes(keyword)) ||
+				       (activity.shortDesc && activity.shortDesc.toLowerCase().includes(keyword)) ||
+				       (activity.province && activity.province.toLowerCase().includes(keyword)) ||
+				       (activity.city && activity.city.toLowerCase().includes(keyword))
+			})
+		},
+
+		selectHistoryActivity(activity) {
+			console.log('📋 选择历史活动:', activity.name)
+			this.selectedHistoryActivity = activity
+			this.showHistoryDropdown = false
+
+			// 使用现有的填充方法
+			this.fillFromHistory(activity)
+
+			// 显示成功提示
+			uni.showToast({
+				title: '已填充历史活动数据',
+				icon: 'success',
+				duration: 2000
+			})
+		},
+
+		handlePageTap() {
+			if (this.showHistoryDropdown) {
+				this.closeHistoryDropdown()
+			}
+		},
+
 		// Navigation methods
 		navigateToStep(step) {
 			const element = uni.createSelectorQuery().select(`#step-${step}`)
@@ -1262,24 +1517,225 @@ export default {
 		},
 
 		// Submit for review
-		submitForReview() {
+		async submitForReview() {
 			if (!this.validateForm()) {
 				uni.showToast({title: '请填写必填项', icon: 'error'})
 				return
 			}
 
-			// Clear draft after successful submission
 			try {
-				uni.removeStorageSync('activityDraft')
+				// 准备提交数据
+				const activityData = {
+					title: this.formData.title,
+					description: this.formData.description,
+					category: this.formData.category,
+					startTime: this.formData.startTime,
+					endTime: this.formData.endTime,
+					location: this.formData.location,
+					maxParticipants: this.formData.maxParticipants,
+					registrationDeadline: this.formData.registrationDeadline,
+					fee: this.formData.fee,
+					images: this.formData.images || [],
+					requirements: this.formData.requirements || '',
+					contact: this.formData.contact || ''
+				}
+
+				// 调用API创建活动
+				const response = await activityService.createActivity(activityData)
+
+				if (response.code === 200) {
+					// Save to history before submission
+					this.saveToHistory()
+
+					// Clear draft after successful submission
+					try {
+						uni.removeStorageSync('activityDraft')
+					} catch (e) {
+						console.error('Failed to clear draft:', e)
+					}
+
+					uni.showToast({title: '提交成功', icon: 'success'})
+					// Navigate back to previous page
+					setTimeout(() => {
+						uni.navigateBack()
+					}, 1500)
+				} else {
+					throw new Error(response.message || '提交失败')
+				}
+			} catch (error) {
+				console.error('提交活动失败:', error)
+				uni.showToast({
+					title: error.message || '提交失败，请重试',
+					icon: 'none'
+				})
+			}
+		},
+
+		// History Management Methods
+		showHistoryModal() {
+			this.showModal = true
+			this.loadHistory()
+		},
+
+		closeHistoryModal() {
+			this.showModal = false
+			this.searchKeyword = ''
+		},
+
+		// Input event handlers
+		onSearchInput(event) {
+			console.log('🔍 搜索输入事件:', {
+				value: event.detail.value,
+				target: event.target,
+				timestamp: new Date().toISOString()
+			})
+			// v-model会自动更新searchKeyword，watch会处理filterHistory
+		},
+
+		onSearchFocus() {
+			console.log('🎯 搜索框获得焦点', {
+				currentValue: this.searchKeyword,
+				timestamp: new Date().toISOString()
+			})
+		},
+
+		onSearchBlur() {
+			console.log('🔄 搜索框失去焦点')
+		},
+
+		loadHistory() {
+			try {
+				const history = uni.getStorageSync('activityHistory') || []
+				this.historyData = history
+				this.filteredHistory = history
 			} catch (e) {
-				console.error('Failed to clear draft:', e)
+				console.error('Failed to load history:', e)
+				this.historyData = []
+				this.filteredHistory = []
+			}
+		},
+
+		saveToHistory() {
+			try {
+				const history = uni.getStorageSync('activityHistory') || []
+
+				// Create history entry
+				const historyEntry = {
+					...this.formData,
+					publishDate: new Date().toLocaleDateString('zh-CN'),
+					publishTime: new Date().toLocaleTimeString('zh-CN'),
+					id: 'history_' + Date.now()
+				}
+
+				// Add to beginning of array
+				history.unshift(historyEntry)
+
+				// Keep only last 50 entries
+				if (history.length > 50) {
+					history.splice(50)
+				}
+
+				uni.setStorageSync('activityHistory', history)
+			} catch (e) {
+				console.error('Failed to save to history:', e)
+			}
+		},
+
+		filterHistory() {
+			const keyword = this.searchKeyword.toLowerCase().trim()
+			if (!keyword) {
+				this.filteredHistory = [...this.historyData]
+			} else {
+				this.filteredHistory = this.historyData.filter(item => {
+					return (item.name && item.name.toLowerCase().includes(keyword)) ||
+						   (item.shortDesc && item.shortDesc.toLowerCase().includes(keyword)) ||
+						   (item.province && item.province.toLowerCase().includes(keyword)) ||
+						   (item.city && item.city.toLowerCase().includes(keyword))
+				})
+			}
+		},
+
+		onSearchInput(event) {
+			// 处理输入事件，确保能正常输入
+			console.log('Search input:', event.detail.value)
+			// v-model会自动更新searchKeyword，这里只需要调用filterHistory
+			this.filterHistory()
+		},
+
+		onSearchFocus() {
+			// 输入框获得焦点时的处理
+			console.log('Search input focused')
+		},
+
+		fillFromHistory(historyItem) {
+			// Fill form data from history
+			this.formData = {
+				...this.formData,
+				name: historyItem.name || '',
+				shortDesc: historyItem.shortDesc || '',
+				startTime: historyItem.startTime || '',
+				endTime: historyItem.endTime || '',
+				province: historyItem.province || '',
+				city: historyItem.city || '',
+				district: historyItem.district || '',
+				address: historyItem.address || '',
+				maxParticipants: historyItem.maxParticipants || '',
+				fee: historyItem.fee || '',
+				tags: historyItem.tags || [],
+				details: historyItem.details || '',
+				tips: historyItem.tips || '',
+				contact: historyItem.contact || '',
+				registration: historyItem.registration || {
+					allowIndividual: true,
+					allowTeam: true,
+					requireApproval: false,
+					personalFields: ['name', 'phone'],
+					teamFields: ['teamName', 'leaderName', 'leaderPhone', 'programName', 'programType', 'participantCount'],
+					customFields: []
+				},
+				settings: historyItem.settings || {
+					customerService: false,
+					customModules: []
+				}
 			}
 
-			uni.showToast({title: '提交成功', icon: 'success'})
-			// Navigate back to previous page
-			setTimeout(() => {
-				uni.navigateBack()
-			}, 1500)
+			// Update location index if province exists
+			if (historyItem.province) {
+				const provinceIndex = this.provinces.indexOf(historyItem.province)
+				if (provinceIndex !== -1) {
+					this.locationIndex.province = provinceIndex
+					this.updateCities(historyItem.province)
+
+					if (historyItem.city) {
+						const cityIndex = this.cities.indexOf(historyItem.city)
+						if (cityIndex !== -1) {
+							this.locationIndex.city = cityIndex
+							this.updateDistricts(historyItem.province, historyItem.city)
+
+							if (historyItem.district) {
+								const districtIndex = this.districts.indexOf(historyItem.district)
+								if (districtIndex !== -1) {
+									this.locationIndex.district = districtIndex
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Close modal and show success message
+			this.closeHistoryModal()
+			uni.showToast({
+				title: '已填充表单数据',
+				icon: 'success',
+				duration: 2000
+			})
+
+			// Scroll to top
+			this.scrollTop = 0
+
+			// Auto-save draft after filling
+			this.saveDraft(true)
 		}
 	}
 }
@@ -1288,6 +1744,244 @@ export default {
 <style lang="scss" scoped>
 @import '@/uni.scss';
 
+// History Activity Selector Styles
+.history-selector {
+	position: relative;
+}
+
+.selector-container {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 24rpx 32rpx;
+	background: #f8fafc;
+	border: 2rpx solid #e2e8f0;
+	border-radius: 20rpx;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.selector-container:hover {
+	background: #ffffff;
+	border-color: $primary-cambridge-blue;
+	box-shadow: 0 4rpx 12rpx rgba(117, 176, 156, 0.1);
+}
+
+.selector-container:active {
+	transform: scale(0.98);
+}
+
+.selector-content {
+	display: flex;
+	align-items: center;
+	flex: 1;
+}
+
+.selector-icon {
+	font-size: 36rpx;
+	margin-right: 16rpx;
+}
+
+.selector-text {
+	font-size: 28rpx;
+	color: #1e293b;
+	font-weight: 500;
+}
+
+.selector-text.placeholder {
+	color: #94a3b8;
+}
+
+.selector-arrow {
+	transition: transform 0.3s ease;
+}
+
+.selector-arrow.arrow-up {
+	transform: rotate(180deg);
+}
+
+.arrow-icon {
+	font-size: 24rpx;
+	color: #94a3b8;
+}
+
+.history-dropdown {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: #ffffff;
+	border: 2rpx solid #e2e8f0;
+	border-radius: 20rpx;
+	box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.1);
+	z-index: 1000;
+	margin-top: 8rpx;
+	max-height: 800rpx;
+}
+
+.dropdown-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 24rpx 32rpx;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.dropdown-title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #1e293b;
+}
+
+.dropdown-count {
+	font-size: 24rpx;
+	color: #94a3b8;
+	background: #f8fafc;
+	padding: 8rpx 16rpx;
+	border-radius: 12rpx;
+}
+
+.dropdown-search {
+	display: flex;
+	align-items: center;
+	padding: 16rpx 24rpx;
+	border-bottom: 1px solid #e2e8f0;
+	/* 确保搜索区域有足够空间 */
+	min-height: 60rpx;
+	width: 100%;
+	box-sizing: border-box;
+	/* 确保内容不会溢出 */
+	overflow: visible;
+}
+
+.search-icon {
+	font-size: 32rpx;
+	color: #94a3b8;
+	margin-right: 16rpx;
+}
+
+.history-search-input {
+	flex: 1;
+	height: 44rpx;
+	line-height: 44rpx;
+	padding: 0 16rpx;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 12rpx;
+	font-size: 28rpx;
+	color: #1e293b;
+	outline: none;
+	box-sizing: border-box;
+	/* 最基本的文本显示设置 */
+	white-space: pre;
+	overflow: visible;
+	text-overflow: clip;
+	/* 确保输入框功能正常 */
+	-webkit-appearance: none;
+	appearance: none;
+	/* 确保能获得焦点和输入 */
+	pointer-events: auto !important;
+	touch-action: auto !important;
+	-webkit-user-select: auto !important;
+	user-select: auto !important;
+	caret-color: #1e293b;
+	/* 基础文本设置 */
+	text-align: left;
+	font-family: inherit;
+	letter-spacing: normal;
+	word-spacing: normal;
+}
+
+.history-search-input::placeholder {
+	color: #94a3b8;
+	font-size: 28rpx;
+}
+
+.dropdown-list {
+	max-height: 400rpx;
+}
+
+.dropdown-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 24rpx 32rpx;
+	border-bottom: 1px solid #f1f5f9;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+	background: #f8fafc;
+}
+
+.dropdown-item:active {
+	background: #e2e8f0;
+}
+
+.dropdown-item:last-child {
+	border-bottom: none;
+}
+
+.item-content {
+	flex: 1;
+}
+
+.item-name {
+	font-size: 28rpx;
+	font-weight: 500;
+	color: #1e293b;
+	margin-bottom: 8rpx;
+}
+
+.item-desc {
+	font-size: 24rpx;
+	color: #64748b;
+	margin-bottom: 8rpx;
+}
+
+.item-location {
+	display: flex;
+	align-items: center;
+	font-size: 22rpx;
+	color: #94a3b8;
+}
+
+.location-icon {
+	font-size: 20rpx;
+	margin-right: 6rpx;
+}
+
+.item-arrow {
+	margin-left: 16rpx;
+}
+
+.item-arrow .arrow-icon {
+	font-size: 32rpx;
+	color: #cbd5e0;
+}
+
+.dropdown-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 80rpx 32rpx;
+}
+
+.empty-icon {
+	font-size: 64rpx;
+	color: #cbd5e0;
+	margin-bottom: 24rpx;
+}
+
+.empty-text {
+	font-size: 28rpx;
+	color: #94a3b8;
+	text-align: center;
+}
+
+// Container styles
 .container {
 	background-color: $uni-bg-color-grey;
 	min-height: 100vh;
@@ -2039,6 +2733,608 @@ export default {
 	.checkbox-item:active,
 	.copy-btn:active {
 		transform: scale(0.95);
+	}
+}
+
+// Activity History Modal - Shadcn Style
+.history-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 40rpx;
+}
+
+.modal-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(4rpx);
+	opacity: 0;
+	animation: fadeIn 0.3s ease-out forwards;
+}
+
+.modal-content {
+	position: relative;
+	background: #ffffff;
+	border-radius: 32rpx;
+	width: 100%;
+	max-width: 800rpx;
+	max-height: 85vh;
+	margin: 0 auto;
+	box-shadow:
+		0 32rpx 64rpx rgba(0, 0, 0, 0.1),
+		0 0 0 1rpx rgba(255, 255, 255, 0.05);
+	z-index: 1;
+	transform: scale(0.95) translateY(20rpx);
+	opacity: 0;
+	animation: modalSlideIn 0.3s ease-out forwards;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+// Modal Header
+.modal-header {
+	padding: 32rpx 40rpx 24rpx 40rpx;
+	border-bottom: 1rpx solid #f1f5f9;
+	background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.header-content {
+	margin-bottom: 16rpx;
+}
+
+.header-title {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	margin-bottom: 8rpx;
+}
+
+.title-icon {
+	font-size: 32rpx;
+}
+
+.title-text {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: #1e293b;
+	letter-spacing: -0.5rpx;
+}
+
+.header-subtitle {
+	margin-left: 48rpx;
+}
+
+.subtitle-text {
+	font-size: 28rpx;
+	color: #64748b;
+	line-height: 1.4;
+}
+
+.close-btn {
+	position: absolute;
+	top: 32rpx;
+	right: 32rpx;
+	width: 72rpx;
+	height: 72rpx;
+	border-radius: 50%;
+	background: #f8fafc;
+	border: 1rpx solid #e2e8f0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	z-index: 2;
+}
+
+.close-btn:hover {
+	background: #ef4444;
+	border-color: #ef4444;
+	transform: scale(1.05);
+}
+
+.close-btn:active {
+	transform: scale(0.95);
+}
+
+.close-icon {
+	font-size: 32rpx;
+	color: #64748b;
+	transition: color 0.2s ease;
+}
+
+.close-btn:hover .close-icon {
+	color: #ffffff;
+}
+
+// Search Section
+.search-section {
+	padding: 24rpx 40rpx;
+	border-bottom: 1rpx solid #f1f5f9;
+	background: #ffffff;
+	/* 确保不会阻止输入事件 */
+	pointer-events: none;
+}
+
+.search-container {
+	position: relative;
+	display: flex;
+	align-items: center;
+	/* 允许输入框接收事件 */
+	pointer-events: auto;
+}
+
+.search-icon {
+	position: absolute;
+	left: 32rpx;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 28rpx;
+	color: #94a3b8;
+	z-index: 1;
+}
+
+.search-input {
+	width: 100%;
+	padding: 32rpx 40rpx 32rpx 72rpx;
+	background: #f8fafc;
+	border: 2rpx solid #e2e8f0;
+	border-radius: 24rpx;
+	font-size: 32rpx;
+	color: #1e293b;
+	transition: all 0.3s ease;
+	outline: none;
+	box-sizing: border-box;
+	/* 确保输入框可以正常接收输入事件 */
+	pointer-events: auto !important;
+	touch-action: auto !important;
+	-webkit-user-select: auto !important;
+	user-select: auto !important;
+	/* uni-app 兼容性 */
+	caret-color: #1e293b;
+	-webkit-appearance: none;
+	appearance: none;
+	/* 防止输入内容溢出 */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.search-input:focus {
+	background: #ffffff;
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 8rpx rgba(59, 130, 246, 0.1);
+}
+
+.search-input::placeholder {
+	color: #94a3b8;
+	font-size: 28rpx;
+}
+
+.modal-body {
+	flex: 1;
+	overflow-y: auto;
+	padding: 0;
+	background: #f8fafc;
+}
+
+// Empty State
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 120rpx 40rpx;
+	text-align: center;
+}
+
+.empty-icon-container {
+	width: 120rpx;
+	height: 120rpx;
+	border-radius: 60rpx;
+	background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 32rpx;
+}
+
+.empty-icon {
+	font-size: 48rpx;
+}
+
+.empty-title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #475569;
+	margin-bottom: 16rpx;
+}
+
+.empty-description {
+	font-size: 28rpx;
+	color: #94a3b8;
+	line-height: 1.5;
+	max-width: 400rpx;
+}
+
+// History List
+.history-list {
+	display: flex;
+	flex-direction: column;
+	padding: 24rpx;
+	gap: 16rpx;
+}
+
+// History Card
+.history-card {
+	background: #ffffff;
+	border-radius: 24rpx;
+	border: 1rpx solid #e2e8f0;
+	padding: 0;
+	transition: all 0.2s ease;
+	cursor: pointer;
+	overflow: hidden;
+}
+
+.history-card:hover {
+	border-color: #3b82f6;
+	box-shadow:
+		0 8rpx 16rpx rgba(0, 0, 0, 0.05),
+		0 0 0 1rpx rgba(59, 130, 246, 0.1);
+	transform: translateY(-2rpx);
+}
+
+.history-card:active {
+	transform: translateY(0);
+}
+
+// Card Header
+.card-header {
+	padding: 32rpx 32rpx 24rpx 32rpx;
+	border-bottom: 1rpx solid #f1f5f9;
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 24rpx;
+}
+
+.card-title-area {
+	flex: 1;
+	min-width: 0;
+}
+
+.card-title {
+	font-size: 36rpx;
+	font-weight: 600;
+	color: #1e293b;
+	line-height: 1.3;
+	margin-bottom: 8rpx;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.card-subtitle {
+	font-size: 28rpx;
+	color: #64748b;
+	line-height: 1.4;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.card-badge {
+	background: #f1f5f9;
+	border-radius: 16rpx;
+	padding: 8rpx 16rpx;
+	min-width: 0;
+	flex-shrink: 0;
+}
+
+.badge-text {
+	font-size: 24rpx;
+	color: #64748b;
+	font-weight: 500;
+}
+
+// Card Content
+.card-content {
+	padding: 24rpx 32rpx;
+}
+
+.info-row {
+	display: flex;
+	gap: 32rpx;
+	margin-bottom: 16rpx;
+}
+
+.info-row:last-child {
+	margin-bottom: 0;
+}
+
+.info-item {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	min-width: 0;
+	flex: 1;
+}
+
+.info-icon {
+	font-size: 24rpx;
+	color: #94a3b8;
+	flex-shrink: 0;
+}
+
+.info-text {
+	font-size: 28rpx;
+	color: #475569;
+	line-height: 1.4;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// Card Footer
+.card-footer {
+	padding: 24rpx 32rpx 32rpx 32rpx;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-top: 1rpx solid #f1f5f9;
+}
+
+.action-button {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	padding: 16rpx 24rpx;
+	background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+	border-radius: 16rpx;
+	transition: all 0.2s ease;
+}
+
+.action-icon {
+	font-size: 24rpx;
+	color: #ffffff;
+}
+
+.action-text {
+	font-size: 28rpx;
+	font-weight: 600;
+	color: #ffffff;
+}
+
+.history-card:hover .action-button {
+	background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.card-arrow {
+	font-size: 32rpx;
+	color: #cbd5e1;
+	transition: color 0.2s ease;
+}
+
+.history-card:hover .card-arrow {
+	color: #3b82f6;
+}
+
+
+// Empty State
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 80rpx 40rpx;
+	color: $uni-text-color-grey;
+}
+
+.empty-state-icon {
+	font-size: 80rpx;
+	margin-bottom: 24rpx;
+	opacity: 0.5;
+}
+
+.empty-state-title {
+	font-size: 32rpx;
+	font-weight: 600;
+	margin-bottom: 16rpx;
+}
+
+.empty-state-description {
+	font-size: 26rpx;
+	text-align: center;
+	line-height: 1.5;
+}
+
+// Animations
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes modalSlideIn {
+	from {
+		opacity: 0;
+		transform: scale(0.9) translateY(20rpx);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+}
+
+// Mobile Optimization
+@media (max-width: 375px) {
+
+	.modal-content {
+		width: 95%;
+		margin: 20rpx;
+		max-height: 85vh;
+	}
+
+	.modal-header {
+		padding: 24rpx;
+	}
+
+	.modal-title {
+		font-size: 32rpx;
+	}
+
+	.modal-body {
+		padding: 16rpx 24rpx;
+	}
+
+	// Shadcn Modal Responsive Design
+	.history-modal {
+		padding: 20rpx;
+	}
+
+	.modal-content {
+		max-width: 95%;
+		max-height: 90vh;
+	}
+
+	.modal-header {
+		padding: 24rpx 32rpx 20rpx 32rpx;
+	}
+
+	.header-title {
+		gap: 12rpx;
+	}
+
+	.title-icon {
+		font-size: 28rpx;
+	}
+
+	.title-text {
+		font-size: 32rpx;
+	}
+
+	.subtitle-text {
+		font-size: 24rpx;
+	}
+
+	.close-btn {
+		width: 64rpx;
+		height: 64rpx;
+		top: 24rpx;
+		right: 24rpx;
+	}
+
+	.close-icon {
+		font-size: 28rpx;
+	}
+
+	.search-section {
+		padding: 20rpx 32rpx;
+	}
+
+	.search-input {
+		padding: 24rpx 32rpx 24rpx 64rpx;
+		font-size: 28rpx;
+	}
+
+	.search-icon {
+		left: 24rpx;
+		font-size: 24rpx;
+	}
+
+	.card-header {
+		padding: 24rpx 24rpx 20rpx 24rpx;
+	}
+
+	.card-title {
+		font-size: 32rpx;
+	}
+
+	.card-subtitle {
+		font-size: 24rpx;
+	}
+
+	.card-content {
+		padding: 20rpx 24rpx;
+	}
+
+	.info-row {
+		gap: 24rpx;
+	}
+
+	.info-text {
+		font-size: 24rpx;
+	}
+
+	.card-footer {
+		padding: 20rpx 24rpx 24rpx 24rpx;
+	}
+
+	.action-button {
+		padding: 12rpx 20rpx;
+	}
+
+	.action-text {
+		font-size: 24rpx;
+	}
+
+	.history-list {
+		padding: 20rpx;
+		gap: 12rpx;
+	}
+}
+
+// Large Font Mode (Accessibility)
+@media (prefers-reduced-motion: reduce) {
+	.history-card,
+	.modal-content,
+	.close-btn,
+	.action-button {
+		transition: none;
+	}
+
+	@keyframes fadeIn {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@keyframes modalSlideIn {
+		from { opacity: 0; transform: scale(0.95); }
+		to { opacity: 1; transform: scale(1); }
+	}
+}
+
+// High Contrast Mode
+@media (prefers-contrast: high) {
+	.modal-content {
+		border: 4rpx solid #000000;
+		box-shadow: none;
+	}
+
+	.history-card {
+		border: 2rpx solid #000000;
+	}
+
+	.search-input {
+		border: 2rpx solid #000000;
+	}
+
+	.action-button {
+		border: 2rpx solid #000000;
 	}
 }
 </style>

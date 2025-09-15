@@ -265,6 +265,9 @@
 </template>
 
 <script>
+import { userService } from '@/services/user';
+import { uploadService } from '@/services/upload';
+
 export default {
   name: 'EditProfile',
   data() {
@@ -300,6 +303,7 @@ export default {
   },
   onLoad() {
     this.loadFormData()
+    this.loadUserProfile()
   },
   methods: {
     uploadAvatar() {
@@ -309,7 +313,22 @@ export default {
         sourceType: ['album', 'camera'],
         success: (res) => {
           const tempFilePath = res.tempFilePaths[0]
-          this.profileData.avatar = tempFilePath
+
+          // 转换为File对象
+          uni.getFileInfo({
+            filePath: tempFilePath,
+            success: (fileInfo) => {
+              const file = {
+                name: 'avatar.jpg',
+                size: fileInfo.size,
+                type: 'image/jpeg',
+                path: tempFilePath
+              }
+
+              // 上传头像
+              this.uploadAvatarToServer(file)
+            }
+          })
         }
       })
     },
@@ -419,37 +438,114 @@ export default {
       try {
         // 准备保存数据
         const saveData = {
-          ...this.profileData,
-          lastUpdated: new Date().toISOString()
+          nickname: this.profileData.nickname,
+          bio: this.profileData.bio || '',
+          gender: this.profileData.gender === 'male' ? '男' : (this.profileData.gender === 'female' ? '女' : '保密'),
+          birthday: this.profileData.birthday || '',
+          address: this.profileData.city || '',
+          bloodType: this.profileData.bloodType || '',
+          email: this.profileData.email || '',
+          artGroups: this.profileData.artGroups || []
         }
 
         // 保存到本地存储
-        uni.setStorageSync('profileData', JSON.stringify(saveData))
+        uni.setStorageSync('profileData', JSON.stringify({
+          ...this.profileData,
+          lastUpdated: new Date().toISOString()
+        }))
 
-        // 显示成功提示
-        this.showSuccessToast = true
-        setTimeout(() => {
-          this.showSuccessToast = false
-        }, 2000)
+        // 调用API保存到服务器
+        const response = await userService.updateProfile(saveData)
 
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        if (response.code === 200) {
+          // 显示成功提示
+          this.showSuccessToast = true
+          setTimeout(() => {
+            this.showSuccessToast = false
+          }, 2000)
 
-        console.log('个人信息已保存:', saveData)
+          console.log('个人信息已保存:', response.data)
 
-        // 可选：保存成功后返回上一页
-        // setTimeout(() => {
-        //   uni.navigateBack()
-        // }, 1500)
+          // 保存成功后返回上一页
+          setTimeout(() => {
+            uni.navigateBack()
+          }, 1500)
+        } else {
+          throw new Error(response.message || '保存失败')
+        }
 
       } catch (error) {
         console.error('保存失败:', error)
         uni.showToast({
-          title: '保存失败',
+          title: error.message || '保存失败',
           icon: 'none'
         })
       } finally {
         this.isSaving = false
+      }
+    },
+
+    // 加载用户资料
+    async loadUserProfile() {
+      try {
+        const response = await userService.getProfile()
+        if (response.code === 200 && response.data) {
+          const profile = response.data
+          this.profileData = {
+            ...this.profileData,
+            nickname: profile.nickname || '',
+            name: profile.name || '',
+            phone: profile.phone || '',
+            wechat: profile.wechat || '',
+            gender: profile.gender === '男' ? 'male' : (profile.gender === '女' ? 'female' : ''),
+            city: profile.address || '',
+            age: profile.age || '',
+            education: profile.education || '',
+            occupation: profile.occupation || '',
+            avatar: profile.avatarUrl || '',
+            bio: profile.bio || '',
+            birthday: profile.birthday || '',
+            bloodType: profile.bloodType || '',
+            email: profile.email || ''
+          }
+        }
+      } catch (error) {
+        console.error('加载用户资料失败:', error)
+        // 如果API调用失败，使用本地存储的数据
+      }
+    },
+
+    // 上传头像到服务器
+    async uploadAvatarToServer(file) {
+      try {
+        uni.showLoading({
+          title: '上传中...'
+        })
+
+        const response = await uploadService.uploadAvatar(file, {
+          onProgress: (progress) => {
+            console.log('上传进度:', progress + '%')
+          }
+        })
+
+        if (response.code === 200) {
+          this.profileData.avatar = response.data.url
+          uni.showToast({
+            title: '上传成功',
+            icon: 'success'
+          })
+        } else {
+          throw new Error(response.message || '上传失败')
+        }
+
+      } catch (error) {
+        console.error('上传头像失败:', error)
+        uni.showToast({
+          title: error.message || '上传失败',
+          icon: 'none'
+        })
+      } finally {
+        uni.hideLoading()
       }
     }
   }

@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API集成测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #75b09c;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #75b09c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #5a8f7c;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .status {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.authenticated {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.not-authenticated {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .three-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #75b09c;
+            transition: width 0.3s ease;
+        }
+        .config-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .file-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .file-upload-area.dragover {
+            border-color: #75b09c;
+            background-color: #f0f8ff;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: #75b09c;
+            color: #75b09c;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 老年活动平台 - 前后端API集成测试</h1>
+
+        <!-- 认证状态显示 -->
+        <div id="authStatus" class="status not-authenticated">
+            <strong>认证状态:</strong> 未认证 - 请先登录或注册用户
+        </div>
+
+        <!-- 配置区域 -->
+        <div class="config-section">
+            <h3>⚙️ 配置信息</h3>
+            <div class="three-column">
+                <div class="form-group">
+                    <label>API地址:</label>
+                    <input type="text" id="apiUrl" value="http://localhost:5535/api" />
+                </div>
+                <div class="form-group">
+                    <label>测试手机号:</label>
+                    <input type="text" id="testPhone" value="13800138000" />
+                </div>
+                <div class="form-group">
+                    <label>测试密码:</label>
+                    <input type="password" id="testPassword" value="password123" />
+                </div>
+            </div>
+            <button onclick="testConnection()">测试连接</button>
+            <button onclick="runAllTests()" class="primary">运行所有测试</button>
+            <button onclick="clearResults()">清除结果</button>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+        </div>
+
+        <!-- 标签页导航 -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('auth')">🔐 认证测试</div>
+            <div class="tab" onclick="switchTab('user')">👤 用户管理</div>
+            <div class="tab" onclick="switchTab('activity')">🎯 活动管理</div>
+            <div class="tab" onclick="switchTab('registration')">📝 报名管理</div>
+            <div class="tab" onclick="switchTab('upload')">📁 文件上传</div>
+        </div>
+
+        <!-- 认证测试 -->
+        <div id="authTab" class="tab-content active">
+            <div class="section">
+                <h3>🔐 用户认证</h3>
+                <div class="two-column">
+                    <div>
+                        <div class="form-group">
+                            <label>手机号:</label>
+                            <input type="tel" id="phone" placeholder="请输入手机号" value="13800138000">
+                        </div>
+                        <div class="form-group">
+                            <label>密码:</label>
+                            <input type="password" id="password" placeholder="请输入密码" value="password123">
+                        </div>
+                        <div class="form-group">
+                            <label>验证码:</label>
+                            <input type="text" id="verifyCode" placeholder="请输入验证码" value="123456">
+                        </div>
+                        <div class="form-group">
+                            <label>昵称:</label>
+                            <input type="text" id="nickname" placeholder="请输入昵称" value="测试用户">
+                        </div>
+                        <button onclick="testRegister()">注册</button>
+                        <button onclick="testLogin()">登录</button>
+                        <button onclick="testLogout()">登出</button>
+                        <button onclick="checkAuthStatus()">检查状态</button>
+                    </div>
+                    <div>
+                        <div class="form-group">
+                            <label>旧密码:</label>
+                            <input type="password" id="oldPassword" placeholder="请输入旧密码">
+                        </div>
+                        <div class="form-group">
+                            <label>新密码:</label>
+                            <input type="password" id="newPassword" placeholder="请输入新密码">
+                        </div>
+                        <div class="form-group">
+                            <label>手机验证码:</label>
+                            <input type="text" id="resetCode" placeholder="请输入验证码">
+                        </div>
+                        <button onclick="sendVerifyCode()">发送验证码</button>
+                        <button onclick="changePassword()">修改密码</button>
+                        <button onclick="resetPassword()">重置密码</button>
+                    </div>
+                </div>
+                <div id="authResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 用户管理测试 -->
+        <div id="userTab" class="tab-content">
+            <div class="section">
+                <h3>👤 用户管理</h3>
+                <div class="two-column">
+                    <div>
+                        <h4>基本操作</h4>
+                        <button onclick="getUserProfile()">获取用户资料</button>
+                        <button onclick="updateUserProfile()">更新用户资料</button>
+                        <button onclick="getUserStats()">获取用户统计</button>
+                        <button onclick="getUserSettings()">获取用户设置</button>
+                    </div>
+                    <div>
+                        <h4>资料更新</h4>
+                        <div class="form-group">
+                            <label>昵称:</label>
+                            <input type="text" id="updateNickname" placeholder="请输入昵称">
+                        </div>
+                        <div class="form-group">
+                            <label>个人简介:</label>
+                            <textarea id="bio" placeholder="请输入个人简介" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>性别:</label>
+                            <select id="gender">
+                                <option value="">请选择</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                                <option value="保密">保密</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>生日:</label>
+                            <input type="date" id="birthday">
+                        </div>
+                        <div class="form-group">
+                            <label>地址:</label>
+                            <input type="text" id="address" placeholder="请输入地址">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>头像文件:</label>
+                    <div class="file-upload-area" id="avatarUploadArea">
+                        <p>点击选择头像文件或拖拽文件到此处</p>
+                        <input type="file" id="avatarFile" accept="image/*" style="display: none;">
+                    </div>
+                    <button onclick="selectAvatarFile()">选择头像</button>
+                    <button onclick="uploadAvatar()">上传头像</button>
+                    <button onclick="deleteAvatar()">删除头像</button>
+                </div>
+                <div id="userResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 活动管理测试 -->
+        <div id="activityTab" class="tab-content">
+            <div class="section">
+                <h3>🎯 活动管理</h3>
+                <div class="two-column">
+                    <div>
+                        <h4>查询操作</h4>
+                        <button onclick="getActivities()">获取活动列表</button>
+                        <button onclick="getRecommendedActivities()">获取推荐活动</button>
+                        <button onclick="getPopularActivities()">获取热门活动</button>
+                        <button onclick="getUpcomingActivities()">获取即将开始活动</button>
+                        <button onclick="getActivityCategories()">获取活动分类</button>
+                    </div>
+                    <div>
+                        <h4>创建活动</h4>
+                        <div class="form-group">
+                            <label>活动标题:</label>
+                            <input type="text" id="activityTitle" placeholder="请输入活动标题">
+                        </div>
+                        <div class="form-group">
+                            <label>活动描述:</label>
+                            <textarea id="activityDescription" placeholder="请输入活动描述" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>活动分类:</label>
+                            <input type="text" id="activityCategory" placeholder="请输入分类ID" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>活动地点:</label>
+                            <input type="text" id="location" placeholder="请输入活动地点">
+                        </div>
+                        <div class="form-group">
+                            <label>最大参与人数:</label>
+                            <input type="number" id="maxParticipants" placeholder="请输入最大参与人数" value="50">
+                        </div>
+                        <div class="form-group">
+                            <label>活动费用:</label>
+                            <input type="number" id="fee" placeholder="请输入活动费用" value="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="two-column">
+                    <div>
+                        <div class="form-group">
+                            <label>开始时间:</label>
+                            <input type="datetime-local" id="startTime">
+                        </div>
+                        <div class="form-group">
+                            <label>结束时间:</label>
+                            <input type="datetime-local" id="endTime">
+                        </div>
+                    </div>
+                    <div>
+                        <h4>操作按钮</h4>
+                        <button onclick="createActivity()">创建活动</button>
+                        <button onclick="searchActivities()">搜索活动</button>
+                        <div class="form-group">
+                            <label>搜索关键词:</label>
+                            <input type="text" id="searchKeyword" placeholder="请输入搜索关键词">
+                        </div>
+                    </div>
+                </div>
+                <div id="activityResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 报名管理测试 -->
+        <div id="registrationTab" class="tab-content">
+            <div class="section">
+                <h3>📝 报名管理</h3>
+                <div class="two-column">
+                    <div>
+                        <h4>报名操作</h4>
+                        <div class="form-group">
+                            <label>活动ID:</label>
+                            <input type="number" id="registrationActivityId" placeholder="请输入活动ID">
+                        </div>
+                        <div class="form-group">
+                            <label>备注:</label>
+                            <textarea id="registrationNotes" placeholder="请输入备注信息" rows="3"></textarea>
+                        </div>
+                        <button onclick="registerActivity()">活动报名</button>
+                        <button onclick="getMyRegistrations()">获取我的报名记录</button>
+                        <button onclick="getRegistrationHistory()">获取报名历史</button>
+                    </div>
+                    <div>
+                        <h4>报名管理</h4>
+                        <div class="form-group">
+                            <label>报名ID:</label>
+                            <input type="number" id="registrationId" placeholder="请输入报名ID">
+                        </div>
+                        <div class="form-group">
+                            <label>取消原因:</label>
+                            <input type="text" id="cancelReason" placeholder="请输入取消原因">
+                        </div>
+                        <button onclick="getRegistrationDetail()">获取报名详情</button>
+                        <button onclick="cancelRegistration()">取消报名</button>
+                        <button onclick="getRecommendedActivities()">获取推荐活动</button>
+                    </div>
+                </div>
+                <div id="registrationResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 文件上传测试 -->
+        <div id="uploadTab" class="tab-content">
+            <div class="section">
+                <h3>📁 文件上传</h3>
+                <div class="two-column">
+                    <div>
+                        <h4>上传设置</h4>
+                        <div class="form-group">
+                            <label>上传类型:</label>
+                            <select id="uploadType">
+                                <option value="avatar">头像</option>
+                                <option value="activity">活动图片</option>
+                                <option value="license">营业执照</option>
+                                <option value="idcard">身份证</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>文件:</label>
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <p>点击选择文件或拖拽文件到此处</p>
+                                <input type="file" id="uploadFile" multiple style="display: none;">
+                            </div>
+                        </div>
+                        <button onclick="selectUploadFile()">选择文件</button>
+                        <button onclick="uploadFile()">上传文件</button>
+                        <button onclick="clearSelectedFiles()">清除选择</button>
+                    </div>
+                    <div>
+                        <h4>已选择文件</h4>
+                        <div id="selectedFiles"></div>
+                        <div class="form-group">
+                            <label>删除文件URL:</label>
+                            <input type="text" id="deleteFileUrl" placeholder="请输入要删除的文件URL">
+                        </div>
+                        <button onclick="deleteFile()">删除文件</button>
+                        <button onclick="checkFileExists()">检查文件是否存在</button>
+                    </div>
+                </div>
+                <div id="uploadResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 测试日志 -->
+        <div class="section">
+            <h3>📋 测试日志</h3>
+            <div class="result info" id="testLogs" style="display: block;">等待测试...</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let selectedFiles = [];
+        let currentToken = null;
+        let testResults = [];
+        let currentTestIndex = 0;
+        let totalTests = 0;
+
+        // 设置默认时间
+        function setDefaultTimes() {
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            const startTime = new Date(tomorrow.getTime() + 9 * 60 * 60 * 1000); // 明天9点
+            const endTime = new Date(tomorrow.getTime() + 11 * 60 * 60 * 1000); // 明天11点
+
+            document.getElementById('startTime').value = startTime.toISOString().slice(0, 16);
+            document.getElementById('endTime').value = endTime.toISOString().slice(0, 16);
+        }
+
+        // API基础配置
+        function getApiUrl() {
+            return document.getElementById('apiUrl').value;
+        }
+
+        // 获取认证token
+        function getToken() {
+            return localStorage.getItem('token') || currentToken;
+        }
+
+        // 设置认证token
+        function setToken(token) {
+            currentToken = token;
+            localStorage.setItem('token', token);
+            updateAuthStatus();
+        }
+
+        // 清除认证token
+        function clearToken() {
+            currentToken = null;
+            localStorage.removeItem('token');
+            updateAuthStatus();
+        }
+
+        // 显示结果
+        function showResult(elementId, data, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        }
+
+        // 更新认证状态显示
+        function updateAuthStatus() {
+            const statusElement = document.getElementById('authStatus');
+            const token = getToken();
+
+            if (token) {
+                statusElement.className = 'status authenticated';
+                statusElement.innerHTML = '<strong>认证状态:</strong> 已认证 ✓';
+            } else {
+                statusElement.className = 'status not-authenticated';
+                statusElement.innerHTML = '<strong>认证状态:</strong> 未认证 - 请先登录或注册用户';
+            }
+        }
+
+        // 记录日志
+        function log(message, type = 'info') {
+            const logs = document.getElementById('testLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logs.textContent += logEntry;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        // 更新进度
+        function updateProgress() {
+            currentTestIndex++;
+            const progress = (currentTestIndex / totalTests) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // 标签页切换
+        function switchTab(tabName) {
+            // 隐藏所有标签页内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 移除所有标签页的active类
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的标签页
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // API请求函数
+        async function apiRequest(url, options = {}) {
+            const token = getToken();
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${getApiUrl()}${url}`, {
+                ...options,
+                headers
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            }
+
+            return data;
+        }
+
+        // 文件上传函数
+        async function uploadFileRequest(url, file, onProgress) {
+            const token = getToken();
+            const formData = new FormData();
+            formData.append('file', file);
+
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable && onProgress) {
+                        const progress = (event.loaded / event.total) * 100;
+                        onProgress(progress);
+                    }
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            resolve(response);
+                        } catch (error) {
+                            reject(new Error('响应解析失败'));
+                        }
+                    } else {
+                        reject(new Error(`上传失败: ${xhr.status}`));
+                    }
+                };
+
+                xhr.onerror = () => {
+                    reject(new Error('网络错误'));
+                };
+
+                xhr.open('POST', `${getApiUrl()}${url}`, true);
+
+                if (token) {
+                    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                }
+
+                xhr.send(formData);
+            });
+        }
+
+        // 测试连接
+        async function testConnection() {
+            try {
+                log('正在测试API连接...');
+                const response = await fetch(`${getApiUrl()}/v1/activities`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    log('✅ API连接成功', 'success');
+                    showResult('authResult', 'API连接成功', 'success');
+                } else {
+                    log(`❌ API连接失败: ${response.status}`, 'error');
+                    showResult('authResult', `API连接失败: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ API连接失败: ${error.message}`, 'error');
+                showResult('authResult', `API连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 认证测试函数
+        async function testRegister() {
+            try {
+                log('开始用户注册测试...');
+                const phone = document.getElementById('phone').value;
+                const password = document.getElementById('password').value;
+                const verifyCode = document.getElementById('verifyCode').value;
+                const nickname = document.getElementById('nickname').value;
+
+                const result = await apiRequest('/v1/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ phone, password, verifyCode, nickname })
+                });
+
+                setToken(result.data.token);
+                log('✅ 用户注册成功', 'success');
+                showResult('authResult', result, 'success');
+            } catch (error) {
+                log(`❌ 用户注册失败: ${error.message}`, 'error');
+                showResult('authResult', `注册失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            try {
+                log('开始用户登录测试...');
+                const phone = document.getElementById('phone').value;
+                const password = document.getElementById('password').value;
+
+                const result = await apiRequest('/v1/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ phone, password })
+                });
+
+                setToken(result.data.token);
+                log('✅ 用户登录成功', 'success');
+                showResult('authResult', result, 'success');
+            } catch (error) {
+                log(`❌ 用户登录失败: ${error.message}`, 'error');
+                showResult('authResult', `登录失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testLogout() {
+            clearToken();
+            log('✅ 用户已登出', 'success');
+            showResult('authResult', '已登出', 'info');
+        }
+
+        async function checkAuthStatus() {
+            try {
+                log('检查认证状态...');
+                const token = getToken();
+                if (!token) {
+                    log('⚠️ 未登录', 'info');
+                    showResult('authResult', '未登录', 'info');
+                    return;
+                }
+
+                const result = await apiRequest('/v1/users/profile');
+                log('✅ 认证状态检查成功', 'success');
+                showResult('authResult', result, 'success');
+            } catch (error) {
+                log(`❌ 认证检查失败: ${error.message}`, 'error');
+                showResult('authResult', `认证检查失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendVerifyCode() {
+            try {
+                log('发送验证码...');
+                const phone = document.getElementById('phone').value;
+                const result = await apiRequest('/v1/auth/send-code', {
+                    method: 'POST',
+                    body: JSON.stringify({ phone })
+                });
+                log('✅ 验证码发送成功', 'success');
+                showResult('authResult', result, 'success');
+            } catch (error) {
+                log(`❌ 验证码发送失败: ${error.message}`, 'error');
+                showResult('authResult', `验证码发送失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function changePassword() {
+            try {
+                log('修改密码...');
+                const oldPassword = document.getElementById('oldPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const result = await apiRequest('/v1/auth/change-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+                log('✅ 密码修改成功', 'success');
+                showResult('authResult', result, 'success');
+            } catch (error) {
+                log(`❌ 密码修改失败: ${error.message}`, 'error');
+                showResult('authResult', `密码修改失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function resetPassword() {
+            try {
+                log('重置密码...');
+                const phone = document.getElementById('phone').value;
+                const code = document.getElementById('resetCode').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const result = await apiRequest('/v1/auth/reset-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ phone, code, newPassword })
+                });
+                log('✅ 密码重置成功', 'success');
+                showResult('authResult', result, 'success');
+            } catch (error) {
+                log(`❌ 密码重置失败: ${error.message}`, 'error');
+                showResult('authResult', `密码重置失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 用户管理测试函数
+        async function getUserProfile() {
+            try {
+                log('获取用户资料...');
+                const result = await apiRequest('/v1/users/profile');
+                log('✅ 获取用户资料成功', 'success');
+                showResult('userResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取用户资料失败: ${error.message}`, 'error');
+                showResult('userResult', `获取用户资料失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function updateUserProfile() {
+            try {
+                log('更新用户资料...');
+                const profileData = {
+                    nickname: document.getElementById('updateNickname').value,
+                    bio: document.getElementById('bio').value,
+                    gender: document.getElementById('gender').value,
+                    birthday: document.getElementById('birthday').value,
+                    address: document.getElementById('address').value
+                };
+
+                const result = await apiRequest('/v1/users/profile', {
+                    method: 'PUT',
+                    body: JSON.stringify(profileData)
+                });
+
+                log('✅ 更新用户资料成功', 'success');
+                showResult('userResult', result, 'success');
+            } catch (error) {
+                log(`❌ 更新用户资料失败: ${error.message}`, 'error');
+                showResult('userResult', `更新用户资料失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getUserStats() {
+            try {
+                log('获取用户统计...');
+                const result = await apiRequest('/v1/users/stats');
+                log('✅ 获取用户统计成功', 'success');
+                showResult('userResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取用户统计失败: ${error.message}`, 'error');
+                showResult('userResult', `获取用户统计失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getUserSettings() {
+            try {
+                log('获取用户设置...');
+                const result = await apiRequest('/v1/users/settings');
+                log('✅ 获取用户设置成功', 'success');
+                showResult('userResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取用户设置失败: ${error.message}`, 'error');
+                showResult('userResult', `获取用户设置失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 头像上传相关函数
+        function selectAvatarFile() {
+            document.getElementById('avatarFile').click();
+        }
+
+        function setupAvatarUpload() {
+            const fileInput = document.getElementById('avatarFile');
+            const uploadArea = document.getElementById('avatarUploadArea');
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadArea.innerHTML = `<p>已选择: ${file.name} (${(file.size / 1024).toFixed(2)} KB)</p>`;
+                }
+            });
+
+            // 拖拽上传
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    uploadArea.innerHTML = `<p>已选择: ${files[0].name} (${(files[0].size / 1024).toFixed(2)} KB)</p>`;
+                }
+            });
+        }
+
+        async function uploadAvatar() {
+            try {
+                log('上传头像...');
+                const fileInput = document.getElementById('avatarFile');
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    log('⚠️ 请选择头像文件', 'info');
+                    showResult('userResult', '请选择头像文件', 'error');
+                    return;
+                }
+
+                const result = await uploadFileRequest('/v1/users/avatar', file);
+                log('✅ 头像上传成功', 'success');
+                showResult('userResult', result, 'success');
+            } catch (error) {
+                log(`❌ 头像上传失败: ${error.message}`, 'error');
+                showResult('userResult', `头像上传失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteAvatar() {
+            try {
+                log('删除头像...');
+                const result = await apiRequest('/v1/users/avatar', {
+                    method: 'DELETE'
+                });
+                log('✅ 头像删除成功', 'success');
+                showResult('userResult', result, 'success');
+            } catch (error) {
+                log(`❌ 头像删除失败: ${error.message}`, 'error');
+                showResult('userResult', `头像删除失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 活动管理测试函数
+        async function getActivities() {
+            try {
+                log('获取活动列表...');
+                const result = await apiRequest('/v1/activities?page=0&size=10');
+                log('✅ 获取活动列表成功', 'success');
+                showResult('activityResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取活动列表失败: ${error.message}`, 'error');
+                showResult('activityResult', `获取活动列表失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getRecommendedActivities() {
+            try {
+                log('获取推荐活动...');
+                const result = await apiRequest('/v1/activities/recommended?page=0&size=10');
+                log('✅ 获取推荐活动成功', 'success');
+                showResult('activityResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取推荐活动失败: ${error.message}`, 'error');
+                showResult('activityResult', `获取推荐活动失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getPopularActivities() {
+            try {
+                log('获取热门活动...');
+                const result = await apiRequest('/v1/activities/popular?page=0&size=10');
+                log('✅ 获取热门活动成功', 'success');
+                showResult('activityResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取热门活动失败: ${error.message}`, 'error');
+                showResult('activityResult', `获取热门活动失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getUpcomingActivities() {
+            try {
+                log('获取即将开始活动...');
+                const result = await apiRequest('/v1/activities/upcoming?page=0&size=10');
+                log('✅ 获取即将开始活动成功', 'success');
+                showResult('activityResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取即将开始活动失败: ${error.message}`, 'error');
+                showResult('activityResult', `获取即将开始活动失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getActivityCategories() {
+            try {
+                log('获取活动分类...');
+                const result = await apiRequest('/v1/activities/categories');
+                log('✅ 获取活动分类成功', 'success');
+                showResult('activityResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取活动分类失败: ${error.message}`, 'error');
+                showResult('activityResult', `获取活动分类失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function createActivity() {
+            try {
+                log('创建活动...');
+                const activityData = {
+                    title: document.getElementById('activityTitle').value,
+                    description: document.getElementById('activityDescription').value,
+                    category: document.getElementById('activityCategory').value,
+                    startTime: document.getElementById('startTime').value,
+                    endTime: document.getElementById('endTime').value,
+                    location: document.getElementById('location').value,
+                    maxParticipants: parseInt(document.getElementById('maxParticipants').value),
+                    fee: parseFloat(document.getElementById('fee').value),
+                    images: []
+                };
+
+                const result = await apiRequest('/v1/activities', {
+                    method: 'POST',
+                    body: JSON.stringify(activityData)
+                });
+
+                log('✅ 创建活动成功', 'success');
+                showResult('activityResult', result, 'success');
+            } catch (error) {
+                log(`❌ 创建活动失败: ${error.message}`, 'error');
+                showResult('activityResult', `创建活动失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function searchActivities() {
+            try {
+                log('搜索活动...');
+                const keyword = document.getElementById('searchKeyword').value;
+                const result = await apiRequest(`/v1/activities/search?keyword=${encodeURIComponent(keyword)}&page=0&size=10`);
+                log('✅ 搜索活动成功', 'success');
+                showResult('activityResult', result, 'success');
+            } catch (error) {
+                log(`❌ 搜索活动失败: ${error.message}`, 'error');
+                showResult('activityResult', `搜索活动失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 报名管理测试函数
+        async function registerActivity() {
+            try {
+                log('活动报名...');
+                const activityId = parseInt(document.getElementById('registrationActivityId').value);
+                const notes = document.getElementById('registrationNotes').value;
+
+                if (!activityId) {
+                    log('⚠️ 请输入活动ID', 'info');
+                    showResult('registrationResult', '请输入活动ID', 'error');
+                    return;
+                }
+
+                const result = await apiRequest('/v1/registrations', {
+                    method: 'POST',
+                    body: JSON.stringify({ activityId, notes })
+                });
+
+                log('✅ 活动报名成功', 'success');
+                showResult('registrationResult', result, 'success');
+            } catch (error) {
+                log(`❌ 活动报名失败: ${error.message}`, 'error');
+                showResult('registrationResult', `活动报名失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getMyRegistrations() {
+            try {
+                log('获取我的报名记录...');
+                const result = await apiRequest('/v1/registrations/my?page=0&size=10');
+                log('✅ 获取报名记录成功', 'success');
+                showResult('registrationResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取报名记录失败: ${error.message}`, 'error');
+                showResult('registrationResult', `获取报名记录失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getRegistrationHistory() {
+            try {
+                log('获取报名历史...');
+                const result = await apiRequest('/v1/registrations/history?page=0&size=10');
+                log('✅ 获取报名历史成功', 'success');
+                showResult('registrationResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取报名历史失败: ${error.message}`, 'error');
+                showResult('registrationResult', `获取报名历史失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getRegistrationDetail() {
+            try {
+                log('获取报名详情...');
+                const registrationId = parseInt(document.getElementById('registrationId').value);
+                if (!registrationId) {
+                    log('⚠️ 请输入报名ID', 'info');
+                    showResult('registrationResult', '请输入报名ID', 'error');
+                    return;
+                }
+
+                const result = await apiRequest(`/v1/registrations/${registrationId}`);
+                log('✅ 获取报名详情成功', 'success');
+                showResult('registrationResult', result, 'success');
+            } catch (error) {
+                log(`❌ 获取报名详情失败: ${error.message}`, 'error');
+                showResult('registrationResult', `获取报名详情失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function cancelRegistration() {
+            try {
+                log('取消报名...');
+                const registrationId = parseInt(document.getElementById('registrationId').value);
+                const reason = document.getElementById('cancelReason').value;
+
+                if (!registrationId) {
+                    log('⚠️ 请输入报名ID', 'info');
+                    showResult('registrationResult', '请输入报名ID', 'error');
+                    return;
+                }
+
+                const result = await apiRequest(`/v1/registrations/${registrationId}/cancel`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason })
+                });
+
+                log('✅ 取消报名成功', 'success');
+                showResult('registrationResult', result, 'success');
+            } catch (error) {
+                log(`❌ 取消报名失败: ${error.message}`, 'error');
+                showResult('registrationResult', `取消报名失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 文件上传测试函数
+        function setupFileUpload() {
+            const fileInput = document.getElementById('uploadFile');
+            const uploadArea = document.getElementById('fileUploadArea');
+
+            fileInput.addEventListener('change', function(e) {
+                selectedFiles = Array.from(e.target.files);
+                updateSelectedFilesDisplay();
+            });
+
+            // 拖拽上传
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                selectedFiles = files;
+                updateSelectedFilesDisplay();
+            });
+        }
+
+        function selectUploadFile() {
+            document.getElementById('uploadFile').click();
+        }
+
+        function updateSelectedFilesDisplay() {
+            const container = document.getElementById('selectedFiles');
+            if (selectedFiles.length === 0) {
+                container.innerHTML = '<p>未选择文件</p>';
+                return;
+            }
+
+            const html = selectedFiles.map(file =>
+                `<div style="margin-bottom: 5px; padding: 5px; background: #f0f0f0; border-radius: 3px;">
+                    ${file.name} (${(file.size / 1024).toFixed(2)} KB)
+                </div>`
+            ).join('');
+            container.innerHTML = html;
+        }
+
+        function clearSelectedFiles() {
+            selectedFiles = [];
+            document.getElementById('uploadFile').value = '';
+            updateSelectedFilesDisplay();
+        }
+
+        async function uploadFile() {
+            try {
+                log('上传文件...');
+                const uploadType = document.getElementById('uploadType').value;
+
+                if (selectedFiles.length === 0) {
+                    log('⚠️ 请选择要上传的文件', 'info');
+                    showResult('uploadResult', '请选择要上传的文件', 'error');
+                    return;
+                }
+
+                const results = [];
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    const result = await uploadFileRequest(`/v1/upload/${uploadType}`, file);
+                    results.push(result);
+                }
+
+                log('✅ 文件上传成功', 'success');
+                showResult('uploadResult', results, 'success');
+            } catch (error) {
+                log(`❌ 文件上传失败: ${error.message}`, 'error');
+                showResult('uploadResult', `文件上传失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteFile() {
+            try {
+                log('删除文件...');
+                const fileUrl = document.getElementById('deleteFileUrl').value;
+                if (!fileUrl) {
+                    log('⚠️ 请输入文件URL', 'info');
+                    showResult('uploadResult', '请输入文件URL', 'error');
+                    return;
+                }
+
+                const result = await apiRequest('/v1/upload' + new URL(fileUrl).pathname.replace('/uploads', ''), {
+                    method: 'DELETE'
+                });
+
+                log('✅ 文件删除成功', 'success');
+                showResult('uploadResult', result, 'success');
+            } catch (error) {
+                log(`❌ 文件删除失败: ${error.message}`, 'error');
+                showResult('uploadResult', `文件删除失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkFileExists() {
+            try {
+                log('检查文件是否存在...');
+                const fileUrl = document.getElementById('deleteFileUrl').value;
+                if (!fileUrl) {
+                    log('⚠️ 请输入文件URL', 'info');
+                    showResult('uploadResult', '请输入文件URL', 'error');
+                    return;
+                }
+
+                const result = await apiRequest('/v1/upload/check' + new URL(fileUrl).pathname.replace('/uploads', ''));
+                log('✅ 文件检查完成', 'success');
+                showResult('uploadResult', result, 'success');
+            } catch (error) {
+                log(`❌ 文件检查失败: ${error.message}`, 'error');
+                showResult('uploadResult', `文件检查失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 清除结果
+        function clearResults() {
+            document.querySelectorAll('.result').forEach(element => {
+                element.style.display = 'none';
+            });
+            document.getElementById('testLogs').textContent = '等待测试...';
+            selectedFiles = [];
+            updateSelectedFilesDisplay();
+            log('已清除所有测试结果', 'info');
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            log('开始运行所有测试...');
+            clearResults();
+
+            // 设置测试总数
+            totalTests = 20; // 根据实际测试数量调整
+            currentTestIndex = 0;
+
+            try {
+                // 测试连接
+                await testConnection();
+                updateProgress();
+
+                // 认证测试
+                await testRegister();
+                updateProgress();
+
+                await testLogin();
+                updateProgress();
+
+                await checkAuthStatus();
+                updateProgress();
+
+                // 用户管理测试
+                await getUserProfile();
+                updateProgress();
+
+                await updateUserProfile();
+                updateProgress();
+
+                await getUserStats();
+                updateProgress();
+
+                // 活动管理测试
+                await getActivities();
+                updateProgress();
+
+                await getRecommendedActivities();
+                updateProgress();
+
+                await getActivityCategories();
+                updateProgress();
+
+                await createActivity();
+                updateProgress();
+
+                // 报名管理测试
+                await getMyRegistrations();
+                updateProgress();
+
+                await getRegistrationHistory();
+                updateProgress();
+
+                // 文件上传测试（跳过，因为没有文件）
+                log('⚠️ 跳过文件上传测试（需要手动选择文件）', 'info');
+                updateProgress();
+
+                log('✅ 所有测试完成！', 'success');
+            } catch (error) {
+                log(`❌ 测试过程中出现错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            setDefaultTimes();
+            updateAuthStatus();
+            setupAvatarUpload();
+            setupFileUpload();
+            updateSelectedFilesDisplay();
+            log('🚀 API集成测试页面已加载完成', 'success');
+        };
+    </script>
+</body>
+</html>

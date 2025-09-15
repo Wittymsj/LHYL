@@ -207,6 +207,8 @@
 </template>
 
 <script>
+import { authService } from '@/services/auth'
+
 export default {
 	data() {
 		return {
@@ -252,7 +254,7 @@ export default {
 
 		clearError(field) {
 			if (this.errors[field]) {
-				this.$delete(this.errors, field)
+				delete this.errors[field];
 			}
 		},
 
@@ -264,50 +266,50 @@ export default {
 			switch(field) {
 				case 'organizerName':
 					if (!this.form.organizerName.trim()) {
-						this.$set(this.errors, field, '请输入主办方名称')
+						this.errors[field] = '请输入主办方名称';
 					} else if (this.form.organizerName.length < 2) {
-						this.$set(this.errors, field, '主办方名称至少2个字符')
+						this.errors[field] = '主办方名称至少2个字符';
 					} else {
-						this.$delete(this.errors, field)
+						delete this.errors[field];
 					}
 					break
 				case 'contactName':
 					if (!this.form.contactName.trim()) {
-						this.$set(this.errors, field, '请输入联系人姓名')
+						this.errors[field] = '请输入联系人姓名';
 					} else if (this.form.contactName.length < 2) {
-						this.$set(this.errors, field, '联系人姓名至少2个字符')
+						this.errors[field] = '联系人姓名至少2个字符';
 					} else {
-						this.$delete(this.errors, field)
+						delete this.errors[field];
 					}
 					break
 				case 'contactPhone':
 					const phoneRegex = /^1[3-9]\d{9}$/
 					if (!this.form.contactPhone.trim()) {
-						this.$set(this.errors, field, '请输入联系电话')
+						this.errors[field] = '请输入联系电话';
 					} else if (!phoneRegex.test(this.form.contactPhone)) {
-						this.$set(this.errors, field, '请输入正确的手机号码')
+						this.errors[field] = '请输入正确的手机号码';
 					} else {
-						this.$delete(this.errors, field)
+						delete this.errors[field];
 					}
 					break
 				case 'email':
 					const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 					if (!this.form.email.trim()) {
-						this.$set(this.errors, field, '请输入电子邮箱')
+						this.errors[field] = '请输入电子邮箱';
 					} else if (!emailRegex.test(this.form.email)) {
-						this.$set(this.errors, field, '请输入正确的邮箱地址')
+						this.errors[field] = '请输入正确的邮箱地址';
 					} else {
-						this.$delete(this.errors, field)
+						delete this.errors[field];
 					}
 					break
 				case 'servicePhone':
 					const servicePhoneRegex = /^((1[3-9]\d{9})|(\d{3,4}-\d{7,8})|(400\d{7})|(800\d{7}))$/
 					if (!this.form.servicePhone.trim()) {
-						this.$set(this.errors, field, '请输入客服电话')
+						this.errors[field] = '请输入客服电话';
 					} else if (!servicePhoneRegex.test(this.form.servicePhone)) {
-						this.$set(this.errors, field, '请输入正确的客服电话号码（支持手机号、座机号、400/800电话）')
+						this.errors[field] = '请输入正确的客服电话号码（支持手机号、座机号、400/800电话）';
 					} else {
-						this.$delete(this.errors, field)
+						delete this.errors[field];
 					}
 					break
 			}
@@ -330,13 +332,13 @@ export default {
 
 			// 验证文件上传
 			if (!this.form.idCardImage) {
-				this.$set(this.errors, 'idCardImage', '请上传身份证或营业执照')
+				this.errors['idCardImage'] = '请上传身份证或营业执照'
 				isValid = false
 			}
 
 			// 验证协议
 			if (!this.form.agreement) {
-				this.$set(this.errors, 'agreement', '请先阅读并同意服务协议')
+				this.errors['agreement'] = '请先阅读并同意服务协议'
 				isValid = false
 			}
 
@@ -395,7 +397,7 @@ export default {
 		toggleAgreement() {
 			this.form.agreement = !this.form.agreement
 			if (this.form.agreement && this.errors.agreement) {
-				this.$delete(this.errors, 'agreement')
+				delete this.errors['agreement']
 			}
 		},
 
@@ -424,7 +426,7 @@ export default {
 			})
 		},
 
-		submitForm() {
+		async submitForm() {
 			if (this.isSubmitting) return
 
 			// 验证表单
@@ -438,21 +440,66 @@ export default {
 
 			this.isSubmitting = true
 
-			// 模拟提交过程
-			setTimeout(() => {
+			try {
+				// 构建文件数据
+				const documents = []
+				if (this.form.idCardImage) {
+					documents.push({
+						name: this.form.idCardName || 'business_license',
+						file: this.form.idCardImage
+					})
+				}
+				if (this.form.certificateImage) {
+					documents.push({
+						name: this.form.certificateName || 'certification_document',
+						file: this.form.certificateImage
+					})
+				}
+				if (this.form.venueImage) {
+					documents.push({
+						name: this.form.venueName || 'venue_document',
+						file: this.form.venueImage
+					})
+				}
+
+				// 准备认证数据
+				const authData = {
+					type: this.form.authType,
+					organizerName: this.form.organizerName,
+					contactName: this.form.contactName,
+					contactPhone: this.form.contactPhone,
+					email: this.form.email,
+					description: this.form.description,
+					documents: documents
+				}
+
+				// 调用API提交认证申请
+				const response = await authService.submitOrganizerAuth(authData)
+
+				if (response.code === 200) {
+					this.isSubmitting = false
+
+					uni.showToast({
+						title: '认证申请提交成功！我们将在3-5个工作日内完成审核。',
+						icon: 'success',
+						duration: 3000
+					})
+
+					// 延迟返回上一页
+					setTimeout(() => {
+						uni.navigateBack()
+					}, 2000)
+				} else {
+					throw new Error(response.message || '提交失败')
+				}
+			} catch (error) {
 				this.isSubmitting = false
-
+				console.error('提交认证申请失败:', error)
 				uni.showToast({
-					title: '认证申请提交成功！我们将在3-5个工作日内完成审核。',
-					icon: 'success',
-					duration: 3000
+					title: error.message || '提交失败，请重试',
+					icon: 'none'
 				})
-
-				// 延迟返回上一页
-				setTimeout(() => {
-					uni.navigateBack()
-				}, 2000)
-			}, 2000)
+			}
 		}
 	}
 }

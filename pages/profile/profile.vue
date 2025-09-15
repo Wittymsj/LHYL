@@ -289,9 +289,8 @@ export default {
 
 		viewAllActivities() {
 			console.log('查看所有活动')
-			uni.showToast({
-				title: '查看所有活动',
-				icon: 'none'
+			uni.navigateTo({
+				url: '/pages/my-activities/my-activities'
 			})
 		},
 

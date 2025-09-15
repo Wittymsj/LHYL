@@ -9,7 +9,7 @@ This is a **uni-app** project for a **Senior Activity Platform (老年活动平�
 ## Application Architecture
 
 ### Core Pages Structure
-根据 `pages.json` 配置，应用包含9个主要页面：
+根据 `pages.json` 配置，应用包含12个主要页面：
 
 **主要导航页面**：
 - **Home Page** (`pages/index/index.vue`): 活动发现首页，包含轮播图、分类导航、推荐活动和活动网格
@@ -24,6 +24,11 @@ This is a **uni-app** project for a **Senior Activity Platform (老年活动平�
 - **User Auth** (`pages/user-auth/user-auth.vue`): 用户认证页面（自定义导航栏）
 - **Organizer Auth** (`pages/organizer-auth/organizer-auth.vue`): 主办方认证页面（自定义导航栏）
 
+**管理页面**：
+- **Activity Review** (`pages/activity-review/activity-review.vue`): 活动审核页面
+- **Carousel Admin** (`pages/carousel-admin/carousel-admin.vue`): 轮播图管理页面
+- **Webview** (`pages/webview/webview.vue`): 网页浏览页面
+
 ### Navigation System
 - **Tab Bar**: Bottom navigation with Home and Profile tabs
 - **Page Navigation**: Profile page links to edit page via user info/avatar clicks
@@ -35,6 +40,7 @@ This is a **uni-app** project for a **Senior Activity Platform (老年活动平�
 - **Dynamic Components**: Art group experiences managed with add/remove functionality
 - **Draft Management**: Auto-save functionality for activity publishing with real-time validation
 - **Smart Navigation**: Progress-based navigation system with scroll-aware indicators
+- **Activity History**: Complete activity history management with search and filtering capabilities
 
 ## Development Environment
 
@@ -53,11 +59,12 @@ This is a **uni-app** project for a **Senior Activity Platform (老年活动平�
 - Version information and app metadata
 
 ### pages.json
-- Page routing structure with 4 main pages
-- Global navigation bar styles (Cambridge blue theme)
-- Tab bar configuration for main navigation
+- Page routing structure with 12 pages across navigation, functional, and admin categories
+- Global navigation bar styles (Cambridge blue theme #75b09c)
+- Tab bar configuration with Home and Profile tabs
 - Launch page configuration (index page first)
 - Individual page style configurations with platform-specific settings
+- Missing tabbar icons: home.png, home-active.png, profile.png, profile-active.png
 
 ### uni.scss
 - Senior Activity Platform theme variables
@@ -82,11 +89,12 @@ This is a **uni-app** project for a **Senior Activity Platform (老年活动平�
 ### Component Patterns
 - **Cards**: White backgrounds with subtle shadows, 20rpx border radius
 - **Buttons**: Gradient backgrounds with scale animations on active state
-- **Inputs**: 24rpx padding, rounded borders, focus states
+- **Inputs**: Advanced form components with validation, multiple variants (default, filled, outlined)
 - **Images**: Aspect ratio containers with object-fit cover
 - **Smart Navigation**: Progress indicators with step-by-step guidance
 - **Rich Text**: Enhanced text editing with character counting and mobile optimization
 - **Tag Systems**: Flexible selection with emoji icons and preview displays
+- **History Selector**: Dropdown components with search functionality and form filling
 
 ## Platform Compatibility
 
@@ -114,6 +122,7 @@ Uses conditional compilation blocks:
 2. Implement validation on blur events
 3. Show error messages with conditional rendering
 4. Persist data using local storage methods
+5. Use dedicated component classes to avoid CSS conflicts (e.g., `.history-search-input` instead of generic `.search-input`)
 
 ## Build and Development Commands
 
@@ -172,13 +181,20 @@ fronted/
 │   ├── registration/
 │   │   └── registration.vue       # 活动报名页面
 │   ├── settings/
-│   │   └── settings.vue           # 设置页面（自定义导航栏）
+│   │   └── settings.vue           # 设置页面
 │   ├── user-auth/
-│   │   └── user-auth.vue          # 用户认证页面（自定义导航栏）
+│   │   └── user-auth.vue          # 用户认证页面
 │   ├── organizer-auth/
-│   │   └── organizer-auth.vue     # 主办方认证页面（自定义导航栏）
-│   └── activity-review/
-│       └── activity-review.vue    # 活动审核页面（自定义导航栏）
+│   │   └── organizer-auth.vue     # 主办方认证页面
+│   ├── activity-review/
+│   │   └── activity-review.vue    # 活动审核页面
+│   ├── carousel-admin/
+│   │   └── carousel-admin.vue     # 轮播图管理页面
+│   └── webview/
+│       └── webview.vue            # 网页浏览页面
+├── components/                     # 可复用组件
+│   ├── form-input.vue             # 高级输入框组件
+│   └── form-textarea.vue          # 高级文本域组件
 ├── static/                         # 静态资源
 │   ├── logo.png                    # 应用Logo
 │   └── tabbar/
@@ -188,15 +204,16 @@ fronted/
 ├── manifest.json                   # 平台配置文件（Vue 3配置）
 ├── pages.json                      # 页面路由和导航配置
 ├── uni.scss                        # 全局SCSS变量和主题
-├── test-create-activity.html       # 活动页面功能演示
+├── test-*.html                     # 功能测试页面
 └── index.html                      # Web平台模板
 ```
 
 **关键配置文件说明**：
-- `manifest.json`: 包含所有平台（iOS、Android、小程序）的配置和权限设置
-- `pages.json`: 定义9个页面的路由、导航栏样式和tabbar配置
+- `manifest.json`: 包含所有平台（iOS、Android、小程序）的配置和权限设置，Vue 3配置
+- `pages.json`: 定义12个页面的路由、导航栏样式和tabbar配置，剑桥蓝主题
 - `App.vue`: 包含重要的全局输入框样式重置，解决跨平台兼容性问题
 - `uni.scss`: 老年活动平台主题变量和设计系统定义
+- `components/`: 可复用的高级表单组件，支持多种状态和验证
 
 ## Known Issues and Dependencies
 
@@ -211,10 +228,11 @@ fronted/
 全局输入框重置样式在 `App.vue` 中定义，确保跨平台行为一致。调试输入框问题（点击性、内容输入）时：
 
 1. 检查 CSS `pointer-events` 和 `z-index` 属性
-2. 如有冲突，确保输入样式的 `!important` 声明
-3. 验证事件处理器正确附加
-4. 使用浏览器开发者工具测试元素交互
-5. 参考 `App.vue` 中的全局样式覆盖规则
+2. 避免使用通用类名（如 `.search-input`），使用组件特定类名（如 `.history-search-input`）
+3. 确保正确的文本显示设置：`white-space: pre`, `overflow: visible`, `text-overflow: clip`
+4. 验证事件处理器正确附加
+5. 使用浏览器开发者工具测试元素交互
+6. 参考 `App.vue` 中的全局样式覆盖规则和 `components/form-input.vue` 的高级实现
 
 ### Build Tools Limitations
 无 package.json 或传统构建工具 - uni-app 需要 HBuilderX IDE 进行：
@@ -252,3 +270,21 @@ Modern shadcn-inspired component patterns:
 - **Draft Management**: Auto-save functionality with change detection
 - **Rich Text Editing**: Character counting and formatting support
 - **Mobile-First Design**: Touch-optimized controls and keyboard handling
+- **History Integration**: Activity history selector with search and form filling capabilities
+
+## Component Architecture
+
+### Reusable Components
+- **FormInput** (`components/form-input.vue`): Advanced input component with multiple variants, validation states, and accessibility features
+  - Supports text, number, email, password, tel, idcard, digit types
+  - Three size variants: small, default, large
+  - Three style variants: default, filled, outlined
+  - Built-in validation, character counting, and clear functionality
+  - Comprehensive mobile optimization and accessibility support
+
+### Key Implementation Patterns
+- **CSS Specificity**: Use component-specific class names to avoid style conflicts
+- **Event Handling**: Proper event propagation and focus management
+- **State Management**: Reactive validation and error states
+- **Accessibility**: ARIA labels, keyboard navigation, and screen reader support
+- **Mobile Optimization**: Touch targets, keyboard handling, and platform-specific fixes

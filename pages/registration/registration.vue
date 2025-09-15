@@ -307,6 +307,8 @@
 </template>
 
 <script>
+import { registrationService } from '@/services/registration'
+
 export default {
   data() {
     return {
@@ -545,38 +547,81 @@ export default {
       delete this.errors.participantCount
     },
 
-    submitForm() {
+    async submitForm() {
       if (!this.validateForm()) {
         return
       }
 
-      // Show success animation
-      this.showSuccess = true
-
-      // Start countdown
-      this.timer = setInterval(() => {
-        this.countdown--
-        if (this.countdown <= 0) {
-          clearInterval(this.timer)
-          this.goBack()
-        }
-      }, 1000)
-
-      // Save user info to local storage
       try {
-        const userInfo = {
-          name: this.formData.name,
-          phone: this.formData.phone,
-          wechat: this.formData.wechat,
-          city: this.formData.city
+        // 准备报名数据
+        const registrationData = {
+          activityId: this.getActivityId(), // 需要从页面参数或其他方式获取
+          type: this.formData.type,
+          personalInfo: {
+            name: this.formData.name,
+            phone: this.formData.phone,
+            wechat: this.formData.wechat,
+            city: this.formData.city,
+            idCard: this.formData.idCard || ''
+          },
+          teamInfo: this.formData.type === 'team' ? {
+            teamName: this.formData.teamName,
+            teamLeader: this.formData.teamLeader,
+            teamMembers: this.formData.teamMembers || [],
+            teamDescription: this.formData.teamDescription || ''
+          } : null,
+          emergencyContact: this.formData.emergencyContact || '',
+          healthInfo: this.formData.healthInfo || '',
+          notes: this.formData.notes || ''
         }
-        uni.setStorageSync('userInfo', userInfo)
-      } catch (error) {
-        console.error('Failed to save user info:', error)
-      }
 
-      // TODO: Submit registration data to server
-      console.log('Registration data:', this.formData)
+        // 调用API提交报名
+        const response = await registrationService.createRegistration(registrationData)
+
+        if (response.code === 200) {
+          // Show success animation
+          this.showSuccess = true
+
+          // Start countdown
+          this.timer = setInterval(() => {
+            this.countdown--
+            if (this.countdown <= 0) {
+              clearInterval(this.timer)
+              this.goBack()
+            }
+          }, 1000)
+
+          // Save user info to local storage
+          try {
+            const userInfo = {
+              name: this.formData.name,
+              phone: this.formData.phone,
+              wechat: this.formData.wechat,
+              city: this.formData.city
+            }
+            uni.setStorageSync('userInfo', userInfo)
+          } catch (error) {
+            console.error('Failed to save user info:', error)
+          }
+        } else {
+          throw new Error(response.message || '报名失败')
+        }
+      } catch (error) {
+        console.error('报名失败:', error)
+        uni.showToast({
+          title: error.message || '报名失败，请重试',
+          icon: 'none'
+        })
+      }
+    },
+
+    // 获取活动ID的方法
+    getActivityId() {
+      // 从页面参数获取活动ID，或者通过其他方式获取
+      const pages = getCurrentPages()
+      const currentPage = pages[pages.length - 1]
+      const options = currentPage.options
+      return options.activityId || options.id || 'default-activity-id'
     },
 
     goBack() {

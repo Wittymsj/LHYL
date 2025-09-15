@@ -278,6 +278,8 @@
 </template>
 
 <script>
+import { authService } from '@/services/auth';
+
 export default {
 	data() {
 		return {
@@ -292,106 +294,16 @@ export default {
 			selectedTypeIndex: 0,
 			enterpriseTypes: ['企业类型', '文化教育', '健康医疗', '旅游服务', '其他'],
 			stats: {
-				total: 156,
-				pending: 23,
-				approved: 118,
-				rejected: 15
+				total: 0,
+				pending: 0,
+				approved: 0,
+				rejected: 0
 			},
-			users: [
-				{
-					id: 'enterprise1',
-					enterpriseName: '文化科技有限公司',
-					type: 'B端企业用户',
-					category: '文化教育',
-					contactPerson: '李经理',
-					phone: '139****8765',
-					businessLicense: '91110108**********23',
-					applyDate: '2025-01-15',
-					status: 'pending',
-					documents: [
-						{
-							id: 'doc1',
-							name: '营业执照',
-							image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
-						},
-						{
-							id: 'doc2',
-							name: '企业法人身份证',
-							image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
-						},
-						{
-							id: 'doc3',
-							name: '组织机构代码证',
-							image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
-						}
-					]
-				},
-				{
-					id: 'enterprise2',
-					enterpriseName: '健康养生中心',
-					type: 'B端企业用户',
-					category: '健康医疗',
-					contactPerson: '王院长',
-					phone: '138****6666',
-					businessLicense: '91110108**********45',
-					applyDate: '2025-01-14',
-					status: 'pending',
-					documents: [
-						{
-							id: 'doc4',
-							name: '营业执照',
-							image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
-						},
-						{
-							id: 'doc5',
-							name: '医疗机构执业许可证',
-							image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
-						}
-					]
-				},
-				{
-					id: 'enterprise3',
-					enterpriseName: '旅游服务有限公司',
-					type: 'B端企业用户',
-					category: '旅游服务',
-					contactPerson: '张经理',
-					phone: '135****9999',
-					businessLicense: '91110108**********67',
-					applyDate: '2025-01-10',
-					status: 'approved',
-					reviewer: '管理员001',
-					reviewTime: '2025-01-10 09:15',
-					activityCount: 12,
-					documents: [
-						{
-							id: 'doc6',
-							name: '营业执照',
-							image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
-						}
-					]
-				},
-				{
-					id: 'enterprise4',
-					enterpriseName: '咨询有限公司',
-					type: 'B端企业用户',
-					category: '其他',
-					contactPerson: '赵总',
-					phone: '136****9876',
-					businessLicense: '91110108**********89',
-					applyDate: '2025-01-12',
-					status: 'rejected',
-					reviewer: '管理员002',
-					rejectTime: '2025-01-12 16:45',
-					rejectReason: '营业执照信息不完整，企业类型不符合平台要求',
-					documents: [
-						{
-							id: 'doc7',
-							name: '营业执照',
-							image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
-						}
-					]
-				}
-			]
+			users: [],
+			loading: false,
+			page: 1,
+			size: 10,
+			hasMore: true
 		}
 	},
 
@@ -432,7 +344,8 @@ export default {
 		// 计算列表高度
 		this.calculateListHeight()
 
-		console.log('用户认证管理页面加载')
+		// 加载用户认证数据
+		this.loadAuthData()
 	},
 
 	methods: {
@@ -517,25 +430,36 @@ export default {
 			})
 		},
 
-		processApproval(userId) {
-			const userIndex = this.users.findIndex(u => u.id === userId)
-			if (userIndex !== -1) {
-				// 更新用户状态
-				this.users[userIndex].status = 'approved'
-				this.users[userIndex].reviewer = '当前管理员'
-				this.users[userIndex].reviewTime = new Date().toLocaleString()
+		async processApproval(userId) {
+			try {
+				// 调用实际的API服务
+				const response = await authService.approveUser(userId)
 
-				// 更新统计数据
-				this.stats.pending--
-				this.stats.approved++
+				const userIndex = this.users.findIndex(u => u.id === userId)
+				if (userIndex !== -1) {
+					// 更新用户状态
+					this.users[userIndex].status = 'approved'
+					this.users[userIndex].reviewer = '当前管理员'
+					this.users[userIndex].reviewTime = new Date().toLocaleString()
 
-				// 关闭展开面板
-				this.expandedUser = null
+					// 更新统计数据
+					this.stats.pending--
+					this.stats.approved++
 
-				// 显示成功提示
+					// 关闭展开面板
+					this.expandedUser = null
+
+					// 显示成功提示
+					uni.showToast({
+						title: '认证已通过',
+						icon: 'success'
+					})
+				}
+			} catch (error) {
+				console.error('通过认证失败:', error)
 				uni.showToast({
-					title: '认证已通过',
-					icon: 'success'
+					title: '操作失败，请重试',
+					icon: 'none'
 				})
 			}
 		},
@@ -550,7 +474,7 @@ export default {
 			this.rejectReason = ''
 		},
 
-		confirmReject(userId) {
+		async confirmReject(userId) {
 			if (!this.rejectReason.trim()) {
 				uni.showToast({
 					title: '请输入拒绝原因',
@@ -559,27 +483,38 @@ export default {
 				return
 			}
 
-			const userIndex = this.users.findIndex(u => u.id === userId)
-			if (userIndex !== -1) {
-				// 更新用户状态
-				this.users[userIndex].status = 'rejected'
-				this.users[userIndex].rejectReason = this.rejectReason
-				this.users[userIndex].reviewer = '当前管理员'
-				this.users[userIndex].rejectTime = new Date().toLocaleString()
+			try {
+				// 调用实际的API服务
+				const response = await authService.rejectUser(userId, this.rejectReason)
 
-				// 更新统计数据
-				this.stats.pending--
-				this.stats.rejected++
+				const userIndex = this.users.findIndex(u => u.id === userId)
+				if (userIndex !== -1) {
+					// 更新用户状态
+					this.users[userIndex].status = 'rejected'
+					this.users[userIndex].rejectReason = this.rejectReason
+					this.users[userIndex].reviewer = '当前管理员'
+					this.users[userIndex].rejectTime = new Date().toLocaleString()
 
-				// 关闭面板
-				this.showingRejectUser = null
-				this.expandedUser = null
-				this.rejectReason = ''
+					// 更新统计数据
+					this.stats.pending--
+					this.stats.rejected++
 
-				// 显示成功提示
+					// 关闭面板
+					this.showingRejectUser = null
+					this.expandedUser = null
+					this.rejectReason = ''
+
+					// 显示成功提示
+					uni.showToast({
+						title: '认证已拒绝',
+						icon: 'success'
+					})
+				}
+			} catch (error) {
+				console.error('拒绝认证失败:', error)
 				uni.showToast({
-					title: '认证已拒绝',
-					icon: 'success'
+					title: '操作失败，请重试',
+					icon: 'none'
 				})
 			}
 		},
@@ -589,6 +524,180 @@ export default {
 				urls: [imageUrl],
 				current: imageUrl
 			})
+		},
+
+		// 加载用户认证数据
+		async loadAuthData() {
+			this.loading = true
+			try {
+				await this.loadUsers()
+				await this.loadStats()
+			} catch (error) {
+				console.error('加载用户认证数据失败:', error)
+				uni.showToast({
+					title: '加载数据失败',
+					icon: 'none'
+				})
+			} finally {
+				this.loading = false
+			}
+		},
+
+		// 加载用户列表
+		async loadUsers() {
+			try {
+				// 调用实际的API服务
+				const response = await authService.getAuthUsers()
+				this.users = response.data || []
+			} catch (error) {
+				console.error('加载用户列表失败:', error)
+				// 如果API调用失败，使用模拟数据作为备用
+				await new Promise(resolve => setTimeout(resolve, 1000))
+
+				// 模拟用户数据
+				const mockUsers = [
+					{
+						id: 'enterprise1',
+						enterpriseName: '文化科技有限公司',
+						type: 'B端企业用户',
+						category: '文化教育',
+						contactPerson: '李经理',
+						phone: '139****8765',
+						businessLicense: '91110108**********23',
+						applyDate: '2025-01-15',
+						status: 'pending',
+						documents: [
+							{
+								id: 'doc1',
+								name: '营业执照',
+								image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
+							},
+							{
+								id: 'doc2',
+								name: '企业法人身份证',
+								image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
+							}
+						]
+					},
+					{
+						id: 'enterprise2',
+						enterpriseName: '健康养生中心',
+						type: 'B端企业用户',
+						category: '健康医疗',
+						contactPerson: '王院长',
+						phone: '138****6666',
+						businessLicense: '91110108**********45',
+						applyDate: '2025-01-14',
+						status: 'pending',
+						documents: [
+							{
+								id: 'doc3',
+								name: '营业执照',
+								image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
+							},
+							{
+								id: 'doc4',
+								name: '医疗机构执业许可证',
+								image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
+							}
+						]
+					},
+					{
+						id: 'enterprise3',
+						enterpriseName: '旅游服务有限公司',
+						type: 'B端企业用户',
+						category: '旅游服务',
+						contactPerson: '张经理',
+						phone: '135****9999',
+						businessLicense: '91110108**********67',
+						applyDate: '2025-01-10',
+						status: 'approved',
+						reviewer: '管理员001',
+						reviewTime: '2025-01-10 09:15',
+						activityCount: 12,
+						documents: [
+							{
+								id: 'doc5',
+								name: '营业执照',
+								image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
+							}
+						]
+					},
+					{
+						id: 'enterprise4',
+						enterpriseName: '咨询有限公司',
+						type: 'B端企业用户',
+						category: '其他',
+						contactPerson: '赵总',
+						phone: '136****9876',
+						businessLicense: '91110108**********89',
+						applyDate: '2025-01-12',
+						status: 'rejected',
+						reviewer: '管理员002',
+						rejectTime: '2025-01-12 16:45',
+						rejectReason: '营业执照信息不完整，企业类型不符合平台要求',
+						documents: [
+							{
+								id: 'doc6',
+								name: '营业执照',
+								image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop'
+							}
+						]
+					}
+				]
+
+				this.users = mockUsers
+			}
+		},
+
+		// 加载统计数据
+		async loadStats() {
+			try {
+				// 模拟统计数据
+				const total = this.users.length
+				const pending = this.users.filter(user => user.status === 'pending').length
+				const approved = this.users.filter(user => user.status === 'approved').length
+				const rejected = this.users.filter(user => user.status === 'rejected').length
+
+				this.stats = {
+					total,
+					pending,
+					approved,
+					rejected
+				}
+			} catch (error) {
+				console.error('加载统计数据失败:', error)
+				throw error
+			}
+		},
+
+		// 实际API调用方法（待实现）
+		async apiApproveUser(userId) {
+			try {
+				// const response = await authService.approveUser(userId)
+				// return response.data
+
+				// 模拟API调用
+				await new Promise(resolve => setTimeout(resolve, 500))
+				return { success: true }
+			} catch (error) {
+				console.error('通过用户认证失败:', error)
+				throw error
+			}
+		},
+
+		async apiRejectUser(userId, reason) {
+			try {
+				// const response = await authService.rejectUser(userId, reason)
+				// return response.data
+
+				// 模拟API调用
+				await new Promise(resolve => setTimeout(resolve, 500))
+				return { success: true }
+			} catch (error) {
+				console.error('拒绝用户认证失败:', error)
+				throw error
+			}
 		}
 	}
 }

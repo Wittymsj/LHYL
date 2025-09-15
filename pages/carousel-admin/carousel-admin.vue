@@ -875,7 +875,7 @@ export default {
 	padding: 8rpx 16rpx;
 	background-color: rgba(255, 255, 255, 0.2);
 	color: white;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-xs;
 	border: none;
 }
@@ -905,7 +905,7 @@ export default {
 	align-items: center;
 	gap: 8rpx;
 	padding: 12rpx 24rpx;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-sm;
 	color: $uni-text-color-grey;
 	transition: all $animation-duration-fast;
@@ -999,7 +999,7 @@ export default {
 .title-image {
 	width: 48rpx;
 	height: 48rpx;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	object-fit: cover;
 }
 
@@ -1048,7 +1048,7 @@ export default {
 .action-btn {
 	width: 48rpx;
 	height: 48rpx;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1154,7 +1154,7 @@ export default {
 .card-btn {
 	flex: 1;
 	padding: 8rpx 12rpx;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-xs;
 	border: 1rpx solid $uni-border-color;
 	background-color: $uni-bg-color;
@@ -1204,13 +1204,14 @@ export default {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	width: 90%;
+	width: 85%;
 	max-width: 600rpx;
-	max-height: 90vh;
+	max-height: 85vh;
 	background-color: $uni-bg-color;
 	border-radius: $uni-border-radius-lg;
 	box-shadow: $shadow-xl;
 	z-index: 1000;
+	overflow: hidden;
 }
 
 .panel-header {
@@ -1234,8 +1235,10 @@ export default {
 }
 
 .panel-content {
-	max-height: calc(90vh - 200rpx);
+	max-height: calc(85vh - 200rpx);
 	padding: 24rpx;
+	overflow-y: auto;
+	box-sizing: border-box;
 }
 
 .form-group {
@@ -1257,24 +1260,54 @@ export default {
 
 .form-input {
 	width: 100%;
-	padding: 16rpx;
+	padding: 20rpx 16rpx;
 	border: 1rpx solid $uni-border-color;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-base;
 	color: $uni-text-color;
 	background-color: $uni-bg-color;
+	box-sizing: border-box;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-height: 88rpx;
+	line-height: 1.4;
+	transition: border-color $animation-duration-fast, box-shadow $animation-duration-fast;
+}
+
+.form-input:focus {
+	border-color: $primary-cambridge-blue;
+	box-shadow: 0 0 0 4rpx rgba($primary-cambridge-blue, 0.1);
+}
+
+.form-input:placeholder {
+	color: $uni-text-color-placeholder;
 }
 
 .form-textarea {
 	width: 100%;
-	min-height: 80rpx;
-	padding: 16rpx;
+	min-height: 120rpx;
+	padding: 20rpx 16rpx;
 	border: 1rpx solid $uni-border-color;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-base;
 	color: $uni-text-color;
 	background-color: $uni-bg-color;
 	resize: vertical;
+	box-sizing: border-box;
+	max-width: 100%;
+	overflow-y: auto;
+	line-height: 1.5;
+	transition: border-color $animation-duration-fast, box-shadow $animation-duration-fast;
+}
+
+.form-textarea:focus {
+	border-color: $primary-cambridge-blue;
+	box-shadow: 0 0 0 4rpx rgba($primary-cambridge-blue, 0.1);
+}
+
+.form-textarea:placeholder {
+	color: $uni-text-color-placeholder;
 }
 
 .char-count {
@@ -1297,7 +1330,7 @@ export default {
 	justify-content: center;
 	gap: 4rpx;
 	padding: 12rpx;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	border: 1rpx solid $uni-border-color;
 	background-color: $uni-bg-color;
 	color: $uni-text-color;
@@ -1327,7 +1360,7 @@ export default {
 // 图片上传
 .image-upload {
 	border: 1rpx solid $uni-border-color;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	padding: 16rpx;
 	background-color: $uni-bg-color-grey;
 }
@@ -1335,7 +1368,7 @@ export default {
 .image-preview {
 	width: 100%;
 	height: 200rpx;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	object-fit: cover;
 	margin-bottom: 16rpx;
 }
@@ -1374,7 +1407,7 @@ export default {
 	padding: 8rpx 16rpx;
 	background-color: $uni-color-error;
 	color: white;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-sm;
 	border: none;
 }
@@ -1384,7 +1417,7 @@ export default {
 	padding: 8rpx 16rpx;
 	background-color: $primary-cambridge-blue;
 	color: white;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-sm;
 	border: none;
 }
@@ -1400,7 +1433,7 @@ export default {
 	flex: 1;
 	padding: 16rpx;
 	border: 1rpx solid $uni-border-color;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	background-color: $uni-bg-color;
 	color: $uni-text-color;
 	font-size: $uni-font-size-sm;
@@ -1411,7 +1444,7 @@ export default {
 	padding: 16rpx;
 	background: $gradient-primary;
 	color: white;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-sm;
 	font-weight: 500;
 	border: none;
@@ -1471,7 +1504,7 @@ export default {
 	flex: 1;
 	padding: 16rpx;
 	border: 1rpx solid $uni-border-color;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	background-color: $uni-bg-color;
 	color: $uni-text-color;
 	font-size: $uni-font-size-sm;
@@ -1482,7 +1515,7 @@ export default {
 	padding: 16rpx;
 	background-color: $uni-color-error;
 	color: white;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	font-size: $uni-font-size-sm;
 	font-weight: 500;
 	border: none;
@@ -1496,7 +1529,7 @@ export default {
 	min-width: 300rpx;
 	padding: 16rpx 24rpx;
 	background-color: $uni-bg-color;
-	border-radius: $uni-border-radius-md;
+	border-radius: $uni-border-radius-base;
 	box-shadow: $shadow-lg;
 	z-index: 1002;
 	display: flex;
@@ -1571,6 +1604,27 @@ export default {
 
 	.edit-panel {
 		width: 95%;
+		max-width: 95%;
+	}
+
+	.panel-content {
+		padding: 16rpx;
+	}
+
+	.form-group {
+		margin-bottom: 20rpx;
+	}
+
+	.form-input {
+		padding: 16rpx 12rpx;
+		font-size: $uni-font-size-sm;
+		min-height: 80rpx;
+	}
+
+	.form-textarea {
+		padding: 16rpx 12rpx;
+		font-size: $uni-font-size-sm;
+		min-height: 100rpx;
 	}
 
 	.bulk-actions {
@@ -1607,6 +1661,23 @@ export default {
 
 	.image-actions {
 		flex-direction: column;
+	}
+
+	.edit-panel {
+		width: 92%;
+		max-width: 92%;
+	}
+
+	.form-input {
+		font-size: $uni-font-size-base;
+		min-height: 84rpx;
+		padding: 18rpx 14rpx;
+	}
+
+	.form-textarea {
+		font-size: $uni-font-size-base;
+		min-height: 110rpx;
+		padding: 18rpx 14rpx;
 	}
 }
 </style>

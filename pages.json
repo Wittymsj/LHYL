@@ -100,6 +100,24 @@
 				"navigationBarTextStyle": "white",
 				"backgroundColor": "#f8f9fa"
 			}
+		},
+		{
+			"path": "pages/webview/webview",
+			"style": {
+				"navigationBarTitleText": "网页浏览",
+				"navigationBarBackgroundColor": "#75b09c",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#f8f9fa"
+			}
+		},
+		{
+			"path": "pages/my-activities/my-activities",
+			"style": {
+				"navigationBarTitleText": "我的活动",
+				"navigationBarBackgroundColor": "#75b09c",
+				"navigationBarTextStyle": "white",
+				"backgroundColor": "#f8f9fa"
+			}
 		}
 	],
 	"globalStyle": {
